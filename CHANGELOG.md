@@ -19,8 +19,14 @@ All notable changes to the Jev Connector are documented here. The format follows
   malformed set, including `options`/`levels`/`legend`/`criteriaTrue`/`criteriaFalse`, fails
   as `JEV:INVALID_QUESTION_SET` without a billed call. The `mock` route reads only `criteria`
   and answers in TypeSafe's shapes, so keyless tests catch contract drift.
+- **OpenRouter request id (M5).** Live OpenRouter `systemOne` responses carry the generation id
+  as header `x-generation-id` (and body `id`), not `x-request-id`. The OpenRouter route now
+  records that id on `attributes.providerRequestId`. Confirmed against a live three-question
+  call on 2026-09-26; see [`docs/provider-contracts.md`](docs/provider-contracts.md).
 
 ### Added
+- **Guiding principle.** `CLAUDE.md` leads with **Think: Smart if-statements** — Jev returns a
+  value; the flow owns the `if`.
 - **M4 — Scale & governance.** The `evaluate-batch` and `filter` scale operations, fanned out
   behind a non-blocking concurrency limit with per-item de-duplication, budgeting, caching and
   stats. Governance foundation: a decision cache, a cluster-wide `BudgetGuard` (call and
