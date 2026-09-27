@@ -33,6 +33,12 @@ public class FallbackRoute {
   private String baseUrl;
 
   @Parameter
+  @Optional(defaultValue = "v1")
+  @DisplayName("API version")
+  @Summary("Path version for this fallback. List Models calls GET /{apiVersion}/models.")
+  private String apiVersion;
+
+  @Parameter
   @Optional
   @Summary("Default model for this fallback; defaults to the route's standard model.")
   private String model;
@@ -57,6 +63,10 @@ public class FallbackRoute {
 
   public String getBaseUrl() {
     return baseUrl;
+  }
+
+  public String getApiVersion() {
+    return apiVersion;
   }
 
   public String getModel() {

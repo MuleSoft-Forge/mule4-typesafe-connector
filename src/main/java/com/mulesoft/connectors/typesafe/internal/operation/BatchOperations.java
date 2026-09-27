@@ -2,6 +2,8 @@ package com.mulesoft.connectors.typesafe.internal.operation;
 
 import org.mule.sdk.api.annotation.Alias;
 import org.mule.sdk.api.annotation.error.Throws;
+import org.mule.sdk.api.annotation.metadata.OutputResolver;
+import org.mule.sdk.api.annotation.metadata.TypeResolver;
 import org.mule.sdk.api.annotation.param.Config;
 import org.mule.sdk.api.annotation.param.Connection;
 import org.mule.sdk.api.annotation.param.Content;
@@ -25,6 +27,12 @@ import com.mulesoft.connectors.typesafe.internal.engine.DecisionContext;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionOutcome;
 import com.mulesoft.connectors.typesafe.internal.error.BatchErrorTypeProvider;
 import com.mulesoft.connectors.typesafe.internal.error.TypeSafeErrorType;
+import com.mulesoft.connectors.typesafe.internal.metadata.BatchAttributesResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.BatchDecisionOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.BatchItemsInputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.FilterOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.NullInputAttributesResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.QuestionsInputResolver;
 import com.mulesoft.connectors.typesafe.internal.stats.DecisionStatsRecorder;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
@@ -61,14 +69,18 @@ public class BatchOperations {
    * later items into {@code SKIPPED_BUDGET} rather than failing the operation. The payload is an array of per-item
    * results; {@link BatchAttributes} carry the totals. A single failed item never fails the operation unless
    * {@code failFast} is set.
+   * <p>
+   * Each uncached item calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("evaluate-batch")
   @DisplayName("[Decide] Evaluate Batch")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = BatchDecisionOutputResolver.class, attributes = BatchAttributesResolver.class)
   @Throws(BatchErrorTypeProvider.class)
   public void evaluateBatch(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content @DisplayName("Items") InputStream items,
-      @Optional @Content(primary = false) @DisplayName("Questions") InputStream questions,
+      @Content @TypeResolver(BatchItemsInputResolver.class) @DisplayName("Items") InputStream items,
+      @Optional @Content(primary = false) @TypeResolver(QuestionsInputResolver.class) @DisplayName("Questions") InputStream questions,
       @Optional @DisplayName("Question set") String questionSet, @Optional String questionSetId,
       @Optional String questionSetVersion,
       @Optional @DisplayName("Key field") @Summary("Field on each item copied to the result's 'key'.") String keyField,
@@ -77,6 +89,7 @@ public class BatchOperations {
       @Optional(defaultValue = "1000") @Summary("Reject batches larger than this; use a Mule Batch Job "
           + "instead.") int maxItems,
       @Optional(defaultValue = "false") @Summary("Fail the whole operation on the first item error.") boolean failFast,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, BatchAttributes> callback) {
 
@@ -171,19 +184,24 @@ public class BatchOperations {
    * than one per item. The payload is {@code {kept, dropped, scores}} — {@code kept}/{@code dropped} are the original
    * items partitioned by the threshold, {@code scores} carries each item's index, {@code noul} (the probability of
    * "yes") and whether it was kept. {@link BatchAttributes} carry the totals.
+   * <p>
+   * Each uncached chunk calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("filter")
   @DisplayName("[Select] Filter")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = FilterOutputResolver.class, attributes = BatchAttributesResolver.class)
   @Throws(BatchErrorTypeProvider.class)
   public void filter(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content @DisplayName("Items") InputStream items,
+      @Content @TypeResolver(BatchItemsInputResolver.class) @DisplayName("Items") InputStream items,
       @DisplayName("Question") @Summary("The yes/no question asked of each item.") String question,
       @Optional(defaultValue = "0.5") @Summary("Keep items whose probability of 'yes' is at least this.") double threshold,
       @Optional(defaultValue = "20") @Summary("Items packed into one call (1-100).") int chunkSize,
       @Optional @DisplayName("Text field") @Summary("Field whose text is shown to the model; the whole item when "
           + "unset.") String textField,
       @Optional(defaultValue = "4") @Summary("Maximum chunks evaluated concurrently (1-32).") int maxConcurrency,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, BatchAttributes> callback) {
 

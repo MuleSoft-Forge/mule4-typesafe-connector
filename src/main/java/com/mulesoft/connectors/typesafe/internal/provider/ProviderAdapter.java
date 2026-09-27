@@ -3,7 +3,6 @@ package com.mulesoft.connectors.typesafe.internal.provider;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionResponse;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -34,11 +33,11 @@ public interface ProviderAdapter {
   CompletableFuture<DecisionResponse> evaluate(DecisionRequest request);
 
   /**
-   * Lists the model ids this route can serve. Routes without a model-list endpoint complete the future exceptionally
-   * with a {@code TYPESAFE:UNSUPPORTED_BY_PROVIDER} {@code ModuleException}; callers should consult
-   * {@link Capabilities#isSupportsModelList()} first.
+   * Lists the models this route can serve, keeping every field of {@code GET /{apiVersion}/models}. Routes without a
+   * model-list endpoint complete the future exceptionally with a {@code TYPESAFE:UNSUPPORTED_BY_PROVIDER}
+   * {@code ModuleException}; callers should consult {@link Capabilities#isSupportsModelList()} first.
    *
-   * @return a future of the route's model ids.
+   * @return a future of the route's model cards, status, and request id.
    */
-  CompletableFuture<List<String>> listModels();
+  CompletableFuture<ModelListPage> listModels();
 }

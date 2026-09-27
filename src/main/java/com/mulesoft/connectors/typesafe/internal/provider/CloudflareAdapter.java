@@ -21,11 +21,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class CloudflareAdapter extends SystemOneAdapter {
 
-  public CloudflareAdapter(String routeName, String baseUrl, String defaultModel, Capabilities capabilities,
-      String apiKey, Map<String, String> extraHeaders, CostExtractor costExtractor,
+  public CloudflareAdapter(String routeName, String baseUrl, String apiVersion, String defaultModel,
+      Capabilities capabilities, String apiKey, Map<String, String> extraHeaders, CostExtractor costExtractor,
       RequestIdExtractor requestIdExtractor, HttpTransport transport) {
-    super(routeName, baseUrl, defaultModel, capabilities, apiKey, extraHeaders, costExtractor, requestIdExtractor,
-        transport);
+    super(routeName, baseUrl, apiVersion, defaultModel, capabilities, apiKey, extraHeaders, costExtractor,
+        requestIdExtractor, transport);
   }
 
   @Override

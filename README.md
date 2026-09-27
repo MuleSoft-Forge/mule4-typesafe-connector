@@ -11,10 +11,11 @@ Jev is a decision model, not a chat model. You give it a **state** plus named, t
 those answers first-class Mule values that drive Choice routers, Batch filters, error
 handlers and follow-up calls.
 
-> **Status:** active development. Milestones **M0–M4** have landed (skeleton, transport &
-> decision engine, all five routes + failover, the full decide/policy/utility operation set
-> with DataSense, and the scale operations plus governance — cache, budget guard, stats and
-> the three monitoring sources). See [`PLAN.md`](PLAN.md) §15 for the roadmap and
+> **Status:** version **1.0.0**. The initial GitHub release includes the connector skeleton,
+> transport and decision engine, all five routes plus failover, the full
+> decide/policy/utility operation set with DataSense, and scale operations plus governance —
+> cache, budget guard, stats and the three monitoring sources. See [`PLAN.md`](PLAN.md) §15
+> for the roadmap and
 > [`CHANGELOG.md`](CHANGELOG.md) for what has shipped.
 
 ## Contents
@@ -53,7 +54,7 @@ rate-limit, overload or timeout errors (never on validation or authorization fai
 
 ## Operations
 
-Twelve operations across four families. "Billed" operations make a provider call; the rest
+Eleven operations across four families. "Billed" operations make a provider call; the rest
 are local.
 
 ### Decide — the billed decision operations
@@ -83,9 +84,9 @@ are local.
 
 | Operation | Alias | Billed | Purpose |
 | --- | --- | :---: | --- |
-| **[Util] Get Capabilities** | `get-capabilities` | ✗ | Reports what each connected route supports — Noul/Choice/Score, confidence, model listing, and option/level ceilings — primary route first. Local; use to feature-gate a flow or discover a route's limits. |
-| **[Util] List Models** | `list-models` | ✔ | Lists the models available on the connected routes as `{id, route}` entries, primary first. Routes that cannot enumerate models are skipped; raises `TYPESAFE:UNSUPPORTED_BY_PROVIDER` if none can. Use to populate a model picker or audit availability. |
-| **[Util] Validate Question Set** | `validate-question-set` | ✗ | Validates a question set locally, **before** any billed call, returning `{valid, errors[], warnings[]}`. Errors are the hard API limits; warnings flag legal-but-risky sets. Local; use as a fail-fast authoring check. |
+| **[Util] Connection Get Capabilities** | `get-capabilities` | ✗ | Not a TypeSafe API call. Exists because this connector can front several suppliers of the same contract. Reports what the primary route and each fallback on the connection support. A direct TypeSafe connection is the full set, so the operation is only useful when a route might differ. |
+| **[Util] Connection List Models** | `list-models` | ✔ | Lists the models available on the connected routes, primary first. Calls `GET /{apiVersion}/models` on each route that can list models. |
+| **[Util] Validate Question Set** | `validate-question-set` | ✗ | Not a connection operation and not an HTTP call. Checks a question-set document on this machine before any billed call. Payload is `{valid, errors, warnings}`. Errors are the hard API limits; warnings flag legal-but-risky sets. |
 
 ## Sources
 
@@ -113,7 +114,7 @@ threshold.
 <dependency>
   <groupId>com.mulesoft.connectors</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <classifier>mule-plugin</classifier>
 </dependency>
 ```

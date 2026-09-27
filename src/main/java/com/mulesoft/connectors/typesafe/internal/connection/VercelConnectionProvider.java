@@ -41,10 +41,17 @@ public class VercelConnectionProvider extends AbstractRouteConnectionProvider {
   @Summary("Base URL of the Vercel AI Gateway.")
   private String baseUrl;
 
+  @Parameter
+  @Optional(defaultValue = "v1")
+  @DisplayName("API version")
+  @Placement(order = 4)
+  @Summary("Path version for this route. List Models calls GET /{apiVersion}/models.")
+  private String apiVersion;
+
   @Override
   public TypeSafeConnection connect() {
-    SystemOneAdapter adapter = new SystemOneAdapter("vercel", baseUrl, model, Capabilities.full(true), apiKey,
-        customHeaders(), CostExtractor.VERCEL, RequestIdExtractor.VERCEL_GENERATION_ID, transport());
+    SystemOneAdapter adapter = new SystemOneAdapter("vercel", baseUrl, apiVersion, model, Capabilities.full(true),
+        apiKey, customHeaders(), CostExtractor.VERCEL, RequestIdExtractor.VERCEL_GENERATION_ID, transport());
     return connection(adapter);
   }
 

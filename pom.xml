@@ -12,7 +12,7 @@
 
   <groupId>com.mulesoft.connectors</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>mule-extension</packaging>
   <name>TypeSafe Connector - Mule 4</name>
   <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes.</description>
@@ -167,8 +167,9 @@
           </execution>
         </executions>
         <configuration>
-          <!-- Pin one cached CE runtime at our declared minimum (4.9.0); avoids network-based version discovery. -->
-          <runtimeProduct>MULE_CE</runtimeProduct>
+          <!-- Pin one cached CE runtime at our declared minimum (4.9.0); avoids network-based version discovery.
+               This plugin maps the literal product MULE to Community. Any other value, including MULE_CE, selects Enterprise. -->
+          <runtimeProduct>MULE</runtimeProduct>
           <runtimeVersion>${munit.mule.version}</runtimeVersion>
         </configuration>
         <dependencies>

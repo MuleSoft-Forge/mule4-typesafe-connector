@@ -158,7 +158,7 @@ Use the forward-compatible parent with `min.mule.version` pinned to 4.9.0, so th
 </parent>
 <groupId>com.mulesoft.connectors</groupId>
 <artifactId>mule4-typesafe-connector</artifactId>
-<version>1.0.0-SNAPSHOT</version>
+<version>1.0.0</version>
 <packaging>mule-extension</packaging>
 <name>TypeSafe Connector - Mule 4</name>
 
@@ -303,9 +303,9 @@ Twelve operations in four groups. Every operation that calls a provider is non-b
 | `typesafe:evaluate-batch` | \[Batch\] Evaluate | Yes | Yes |
 | `typesafe:filter` | \[Batch\] Filter | Yes | Yes |
 | `typesafe:rerank` | \[Batch\] Rerank | Yes | v1.1 |
-| `typesafe:validate-question-set` | \[Util\] Validate Question Set | No | Yes |
-| `typesafe:get-capabilities` | \[Util\] Get Capabilities | No | Yes |
-| `typesafe:list-models` | \[Util\] List Models | Yes | Yes |
+| `typesafe:validate-question-set` | \[Question Set\] Validate | No | Yes |
+| `typesafe:get-capabilities` | \[Connection\] Get Capabilities | No | Yes |
+| `typesafe:list-models` | \[Connection\] List Models | Yes | Yes |
 
 **Shared parameters** (a `@ParameterGroup` named "Request options" on every provider-calling op): `modelOverride` (String, optional), `includeRawResponse` (boolean), `useCache` (config override of `cacheEnabled`), `step` (String label for `traceEntry.step`).
 

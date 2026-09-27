@@ -67,8 +67,9 @@ public class MockAdapter implements ProviderAdapter {
   }
 
   @Override
-  public CompletableFuture<List<String>> listModels() {
-    return CompletableFuture.completedFuture(List.of("mock", "mock-latest"));
+  public CompletableFuture<ModelListPage> listModels() {
+    return CompletableFuture.completedFuture(new ModelListPage(
+        List.of(new ModelCard("mock", null, null), new ModelCard("mock-latest", null, null)), 200, null));
   }
 
   private ObjectNode answerFor(JsonNode question) {

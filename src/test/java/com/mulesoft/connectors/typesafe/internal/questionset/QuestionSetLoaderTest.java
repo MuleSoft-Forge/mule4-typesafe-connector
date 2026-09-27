@@ -51,6 +51,20 @@ class QuestionSetLoaderTest {
   }
 
   @Test
+  void listsBundledFilesWhenContextClassLoaderCannotSeeThem() {
+    ClassLoader previous = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(new ClassLoader(null) {
+    });
+    try {
+      Set<String> names = QuestionSetLoader.list("questions/");
+      assertTrue(names.contains("ticket-triage.json"), "expected ticket-triage.json in " + names);
+      assertEquals("ticket-triage", QuestionSetLoader.load("questions/", "ticket-triage").id());
+    } finally {
+      Thread.currentThread().setContextClassLoader(previous);
+    }
+  }
+
+  @Test
   void missingFileRaisesInvalidQuestionSet() {
     ModuleException e = assertThrows(ModuleException.class,
         () -> QuestionSetLoader.load("questions/", "does-not-exist"));

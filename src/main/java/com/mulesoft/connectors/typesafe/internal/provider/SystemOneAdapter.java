@@ -35,6 +35,7 @@ public class SystemOneAdapter implements ProviderAdapter {
 
   private final String routeName;
   private final String baseUrl;
+  private final String apiVersion;
   private final String defaultModel;
   private final Capabilities capabilities;
   private final String apiKey;
@@ -43,11 +44,12 @@ public class SystemOneAdapter implements ProviderAdapter {
   private final RequestIdExtractor requestIdExtractor;
   private final HttpTransport transport;
 
-  public SystemOneAdapter(String routeName, String baseUrl, String defaultModel, Capabilities capabilities,
-      String apiKey, Map<String, String> extraHeaders, CostExtractor costExtractor,
+  public SystemOneAdapter(String routeName, String baseUrl, String apiVersion, String defaultModel,
+      Capabilities capabilities, String apiKey, Map<String, String> extraHeaders, CostExtractor costExtractor,
       RequestIdExtractor requestIdExtractor, HttpTransport transport) {
     this.routeName = routeName;
     this.baseUrl = trimTrailingSlash(baseUrl);
+    this.apiVersion = normalizeVersion(apiVersion);
     this.defaultModel = defaultModel;
     this.capabilities = capabilities;
     this.apiKey = apiKey;
@@ -82,13 +84,28 @@ public class SystemOneAdapter implements ProviderAdapter {
   }
 
   @Override
-  public CompletableFuture<List<String>> listModels() {
+  public CompletableFuture<ModelListPage> listModels() {
     if (!capabilities.isSupportsModelList()) {
       return CompletableFuture.failedFuture(new ModuleException(
           "The " + routeName + " route does not support model listing", TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER));
     }
-    return transport.send(HttpConstants.Method.GET, baseUrl + "/v1/models", jsonHeaders(), null)
+    return transport.send(HttpConstants.Method.GET, baseUrl + "/" + apiVersion + "/models", jsonHeaders(), null)
         .thenApply(this::parseModels);
+  }
+
+  /** The configured path version, defaulting to {@code v1} when the connection leaves it blank. */
+  private static String normalizeVersion(String apiVersion) {
+    if (apiVersion == null || apiVersion.isBlank()) {
+      return "v1";
+    }
+    String trimmed = apiVersion.trim();
+    while (trimmed.startsWith("/")) {
+      trimmed = trimmed.substring(1);
+    }
+    while (trimmed.endsWith("/")) {
+      trimmed = trimmed.substring(0, trimmed.length() - 1);
+    }
+    return trimmed.isBlank() ? "v1" : trimmed;
   }
 
   /** Headers shared by every request: auth (when keyed), plus JSON content negotiation and the route's extras. */
@@ -102,9 +119,12 @@ public class SystemOneAdapter implements ProviderAdapter {
     return headers;
   }
 
-  /** The decision endpoint. Overridden by the Cloudflare adapter, which posts to {@code {baseUrl}/{model}}. */
+  /**
+   * The configured decision endpoint, {@code POST /{apiVersion}/systemone}. Overridden by the Cloudflare adapter, which
+   * posts to {@code {baseUrl}/{model}}.
+   */
   protected String endpoint(String model) {
-    return baseUrl + "/v1/systemone";
+    return baseUrl + "/" + apiVersion + "/systemone";
   }
 
   /** Builds the request body. Overridden by the Cloudflare adapter, which nests under {@code input}. */
@@ -116,7 +136,7 @@ public class SystemOneAdapter implements ProviderAdapter {
     return Json.write(node);
   }
 
-  private List<String> parseModels(RawHttpResponse response) {
+  private ModelListPage parseModels(RawHttpResponse response) {
     if (!response.isSuccess()) {
       OptionalLong retryAfter = RetryPolicy.parseRetryAfter(response.header("retry-after-ms"),
           response.header("retry-after"), Instant.now());
@@ -128,17 +148,26 @@ public class SystemOneAdapter implements ProviderAdapter {
     } catch (RuntimeException e) {
       throw new ModuleException("Model list body was not valid JSON", TypeSafeErrorType.INVALID_RESPONSE, e);
     }
-    List<String> ids = new ArrayList<>();
-    JsonNode models = unwrap(root).path("models");
+    JsonNode unwrapped = unwrap(root);
+    List<ModelCard> cards = new ArrayList<>();
+    JsonNode models = unwrapped.path("models");
     if (models.isArray()) {
       for (JsonNode model : models) {
-        JsonNode name = model.isObject() ? model.get("name") : model;
-        if (name != null && name.isTextual() && !name.asText().isBlank()) {
-          ids.add(name.asText());
+        if (!model.isObject()) {
+          continue;
         }
+        String name = textOrNull(model.get("name"));
+        if (name == null) {
+          continue;
+        }
+        cards.add(new ModelCard(name, textOrNull(model.get("description")), textOrNull(model.get("release_date"))));
       }
     }
-    return ids;
+    return new ModelListPage(cards, response.status(), requestIdExtractor.extract(response, unwrapped));
+  }
+
+  private static String textOrNull(JsonNode node) {
+    return node != null && node.isTextual() && !node.asText().isBlank() ? node.asText() : null;
   }
 
   private DecisionResponse parse(RawHttpResponse response, String sentModel) {

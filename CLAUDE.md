@@ -24,17 +24,18 @@ is the default model. Jev is a *decision* model
 (not a chat model): given a **state** plus named, typed **questions** (Noul /
 Choice / Score) it returns one typed **answer** per question.
 
-- Coordinates: `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0-SNAPSHOT`
+- Coordinates: `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0`
 - Packaging: `mule-extension` · XML prefix `typesafe` · namespace
   `http://www.mulesoft.org/schema/mule/typesafe`
 - Parent: `org.mule.extensions:mule-java-extension-parent:1.12.3`
 - Java 17 · Apache-2.0 · min Mule Runtime **4.9.0**
 - Repo: `github.com/MuleSoft-Forge/mule4-typesafe-connector`
 
-## Current status (2026-09-26)
+## Current status (2026-09-27)
 
 Milestones **M0–M4** are complete, merged to `develop` and `main`, and pushed.
-**M5** is in progress on `feature/*` branches off `develop` (first release `1.0.0`).
+The GitHub `1.0.0` release completes the first M5 delivery; Maven Central and Exchange
+publication remain in progress.
 
 | Milestone | Scope | State |
 | --- | --- | --- |
@@ -43,7 +44,7 @@ Milestones **M0–M4** are complete, merged to `develop` and `main`, and pushed.
 | M2 | Five routes + ordered failover, `list-models` | ✅ |
 | M3 | decide/policy/utility ops, question sets, DataSense, MUnit suite | ✅ |
 | M4 | `evaluate-batch`, `filter`, cache, budget guard, stats, 3 sources | ✅ |
-| M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central + Exchange publish profiles | ⏳ in progress |
+| M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central + Exchange publish profiles | GitHub release complete; registries pending |
 
 ## Build & quality gates
 

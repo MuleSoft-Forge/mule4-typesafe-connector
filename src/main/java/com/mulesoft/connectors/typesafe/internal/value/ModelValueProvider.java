@@ -9,6 +9,8 @@ import org.mule.sdk.api.values.ValueResolvingException;
 import com.mulesoft.connectors.typesafe.internal.connection.RouteDefaults;
 import com.mulesoft.connectors.typesafe.internal.connection.RouteType;
 import com.mulesoft.connectors.typesafe.internal.connection.TypeSafeConnection;
+import com.mulesoft.connectors.typesafe.internal.provider.ModelCard;
+import com.mulesoft.connectors.typesafe.internal.provider.ModelListPage;
 import com.mulesoft.connectors.typesafe.internal.provider.ProviderAdapter;
 
 import java.util.LinkedHashSet;
@@ -33,7 +35,10 @@ public class ModelValueProvider implements ValueProvider {
     Set<String> ids = new LinkedHashSet<>(RouteDefaults.models(RouteType.fromRouteName(primary.routeName())));
     if (primary.capabilities().isSupportsModelList()) {
       try {
-        ids.addAll(primary.listModels().get(LIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+        ModelListPage page = primary.listModels().get(LIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        for (ModelCard card : page.models()) {
+          ids.add(card.name());
+        }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (Exception ignored) {

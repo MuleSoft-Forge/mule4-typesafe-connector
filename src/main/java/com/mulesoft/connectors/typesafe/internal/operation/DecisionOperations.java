@@ -4,6 +4,7 @@ import org.mule.sdk.api.annotation.Alias;
 import org.mule.sdk.api.annotation.error.Throws;
 import org.mule.sdk.api.annotation.metadata.MetadataKeyId;
 import org.mule.sdk.api.annotation.metadata.OutputResolver;
+import org.mule.sdk.api.annotation.metadata.TypeResolver;
 import org.mule.sdk.api.annotation.param.Config;
 import org.mule.sdk.api.annotation.param.Connection;
 import org.mule.sdk.api.annotation.param.Content;
@@ -26,8 +27,15 @@ import com.mulesoft.connectors.typesafe.internal.engine.DecisionEngine;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionOutcome;
 import com.mulesoft.connectors.typesafe.internal.error.DecisionErrorTypeProvider;
 import com.mulesoft.connectors.typesafe.internal.error.TypeSafeErrorType;
+import com.mulesoft.connectors.typesafe.internal.metadata.ChoiceAnswerOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.DecisionAttributesResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.DecisionOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.JsonInputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.NoulAnswerOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.NullInputAttributesResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.QuestionSetTypeKeysResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.QuestionsInputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.ScoreAnswerOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.stats.DecisionStatsRecorder;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
@@ -67,16 +75,21 @@ public class DecisionOperations {
    * referencing a classpath question-set file ({@code questionSet}); exactly one is required. The output is the answers
    * object (each answer enriched with a {@code derived} block); {@code attributes} carry provider, usage, cost, timing
    * and a {@code traceEntry}.
+   * <p>
+   * Hosted System One routes call {@code POST /{apiVersion}/systemone}. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("evaluate")
   @DisplayName("[Decide] Evaluate")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
-  @OutputResolver(output = DecisionOutputResolver.class)
+  @OutputResolver(output = DecisionOutputResolver.class, attributes = DecisionAttributesResolver.class)
   @Throws(DecisionErrorTypeProvider.class)
   public void evaluate(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content InputStream state, @Optional @Content(primary = false) @DisplayName("Questions") InputStream questions,
+      @Content @TypeResolver(JsonInputResolver.class) InputStream state,
+      @Optional @Content(primary = false) @TypeResolver(QuestionsInputResolver.class) @DisplayName("Questions") InputStream questions,
       @Optional @DisplayName("Question set") @MetadataKeyId(QuestionSetTypeKeysResolver.class) String questionSet,
       @Optional String questionSetId, @Optional String questionSetVersion,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
     DecisionRequest request;
@@ -112,14 +125,20 @@ public class DecisionOperations {
   /**
    * Asks a single yes/no (Noul) question and returns just that answer, so a flow reads {@code payload.noul} (the
    * probability of "yes") directly.
+   * <p>
+   * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("ask-noul")
   @DisplayName("[Decide] Ask Yes/No")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = NoulAnswerOutputResolver.class, attributes = DecisionAttributesResolver.class)
   @Throws(DecisionErrorTypeProvider.class)
   public void askNoul(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content InputStream state, @DisplayName("Instructions") String instructions, @Optional String criteriaTrue,
-      @Optional String criteriaFalse, @ParameterGroup(name = "Request options") RequestOptions options,
+      @Content @TypeResolver(JsonInputResolver.class) InputStream state,
+      @DisplayName("Instructions") String instructions, @Optional String criteriaTrue, @Optional String criteriaFalse,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
+      @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
     ObjectNode question = Json.object();
     question.put("type", "noul");
@@ -139,14 +158,20 @@ public class DecisionOperations {
   /**
    * Asks a single Choice question over a fixed set of options and returns just that answer, so a flow reads
    * {@code payload.choice} and {@code payload.derived}.
+   * <p>
+   * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("choose")
   @DisplayName("[Decide] Choose")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = ChoiceAnswerOutputResolver.class, attributes = DecisionAttributesResolver.class)
   @Throws(DecisionErrorTypeProvider.class)
   public void choose(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content InputStream state, @DisplayName("Instructions") String instructions,
-      @DisplayName("Options") Map<String, String> chooseOptions, @Optional String noMatchOption,
+      @Content @TypeResolver(JsonInputResolver.class) InputStream state,
+      @DisplayName("Instructions") String instructions, @DisplayName("Options") Map<String, String> chooseOptions,
+      @Optional String noMatchOption,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
     if (chooseOptions == null || chooseOptions.isEmpty()) {
@@ -174,14 +199,20 @@ public class DecisionOperations {
   /**
    * Asks a single Score question over ordered levels and returns just that answer, so a flow reads
    * {@code payload.score} and {@code payload.derived.level}.
+   * <p>
+   * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("score")
   @DisplayName("[Decide] Score")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = ScoreAnswerOutputResolver.class, attributes = DecisionAttributesResolver.class)
   @Throws(DecisionErrorTypeProvider.class)
   public void score(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content InputStream state, @DisplayName("Instructions") String instructions,
-      @DisplayName("Levels") List<String> levels, @ParameterGroup(name = "Request options") RequestOptions options,
+      @Content @TypeResolver(JsonInputResolver.class) InputStream state,
+      @DisplayName("Instructions") String instructions, @DisplayName("Levels") List<String> levels,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
+      @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
     if (levels == null || levels.size() < 2) {
       callback.error(new ModuleException("score requires at least two levels", TypeSafeErrorType.INVALID_QUESTION_SET));

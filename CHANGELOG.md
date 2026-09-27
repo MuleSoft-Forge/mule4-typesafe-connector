@@ -5,6 +5,8 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-27
+
 ### Changed
 - **Renamed from "Jev Connector" to "TypeSafe Connector".** The connector wraps TypeSafe's
   System One API and Jev is the value of its `model` setting, so it is named after the vendor

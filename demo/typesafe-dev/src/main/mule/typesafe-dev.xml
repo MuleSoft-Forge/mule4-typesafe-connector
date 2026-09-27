@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:typesafe="http://www.mulesoft.org/schema/mule/typesafe"
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:typesafe="http://www.mulesoft.org/schema/mule/typesafe"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule/typesafe/current/mule-typesafe.xsd">
+http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule/typesafe/current/mule-typesafe.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
 	<!-- Secrets live in src/main/resources/local.properties (gitignored). Never hard-code the key here. -->
 	<configuration-properties file="local.properties" />
@@ -17,7 +18,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	</http:listener-config>
 
 	<typesafe:config name="TypeSafe_Config" doc:name="TypeSafe Config">
-		<typesafe:openrouter-connection apiKey="${typesafe.openrouter.apiKey}" appTitle="TypeSafe Demo" />
+		<typesafe:typesafe-connection apiKey="${typesafe.apiKey}" />
 	</typesafe:config>
 
 	<!-- Reusable sample ticket used by the decision flows. -->
@@ -32,23 +33,47 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	</sub-flow>
 
 	<!-- ============================================================= -->
-	<!-- [Util] Get Capabilities  —  GET /capabilities                 -->
+	<!-- [Util] Connection Get Capabilities  —  local, no provider call -->
 	<!-- ============================================================= -->
 	<flow name="get-capabilities-flow">
 		<http:listener config-ref="HTTP_Listener_config" path="/capabilities" allowedMethods="GET" />
 		<logger level="INFO" category="typesafe.demo" message="[capabilities] ▶ requesting route capabilities" />
-		<typesafe:get-capabilities config-ref="TypeSafe_Config" doc:name="[Util] Get Capabilities" />
+		<typesafe:get-capabilities config-ref="TypeSafe_Config" doc:name="[Util] Connection Get Capabilities" />
 		<logger level="INFO" category="typesafe.demo" message="#['[capabilities] ◀ ' ++ write(payload, 'application/json')]" />
+		<ee:transform doc:name="Transform Message" doc:id="5f6a8f38-acd5-4472-a55e-e8f2e62f788c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 
 	<!-- ============================================================= -->
-	<!-- [Util] List Models  —  GET /models                            -->
+	<!-- [Util] Connection List Models  —  GET /{apiVersion}/models  -->
 	<!-- ============================================================= -->
 	<flow name="list-models-flow">
 		<http:listener config-ref="HTTP_Listener_config" path="/models" allowedMethods="GET" />
 		<logger level="INFO" category="typesafe.demo" message="[models] ▶ listing models on connected routes" />
-		<typesafe:list-models config-ref="TypeSafe_Config" doc:name="[Util] List Models" />
+		<typesafe:list-models config-ref="TypeSafe_Config" doc:name="[Util] Connection List Models" />
 		<logger level="INFO" category="typesafe.demo" message="#['[models] ◀ ' ++ write(payload, 'application/json')]" />
+		<ee:transform doc:name="Transform Message" doc:id="558a38e1-b558-4274-9858-e2df67485bb6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 
 	<!-- ============================================================= -->
@@ -57,8 +82,20 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<flow name="validate-question-set-flow">
 		<http:listener config-ref="HTTP_Listener_config" path="/validate" allowedMethods="GET" />
 		<logger level="INFO" category="typesafe.demo" message="[validate] ▶ validating question set 'ticket-triage'" />
-		<typesafe:validate-question-set config-ref="TypeSafe_Config" questionSet="ticket-triage" doc:name="[Util] Validate Question Set" />
+		<typesafe:validate-question-set doc:name="[Util] Validate Question Set" doc:id="5392b875-c72a-4dc4-bd1f-a8eb44f0c717" config-ref="TypeSafe_Config"/>
 		<logger level="INFO" category="typesafe.demo" message="#['[validate] ◀ ' ++ write(payload, 'application/json')]" />
+		<ee:transform doc:name="Transform Message" doc:id="810aeece-f850-4211-98c2-b81f92dd14f4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 
 	<!-- ============================================================= -->

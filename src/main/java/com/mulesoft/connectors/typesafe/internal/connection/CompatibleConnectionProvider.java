@@ -29,28 +29,36 @@ public class CompatibleConnectionProvider extends AbstractRouteConnectionProvide
   private String baseUrl;
 
   @Parameter
+  @Optional(defaultValue = "v1")
+  @DisplayName("API version")
+  @Placement(order = 2)
+  @Summary("Path version for this route. List Models calls GET /{apiVersion}/models.")
+  private String apiVersion;
+
+  @Parameter
   @Optional
   @Password
-  @Placement(order = 2)
+  @Placement(order = 3)
   @Summary("Optional API key, sent as a Bearer token when present.")
   private String apiKey;
 
   @Parameter
   @Optional
-  @Placement(order = 3)
+  @Placement(order = 4)
   @Summary("Default model used when an operation does not specify one.")
   private String model;
 
   @Parameter
   @Optional(defaultValue = "false")
-  @Placement(order = 4)
+  @Placement(order = 5)
   @Summary("Whether this gateway can enumerate models.")
   private boolean supportsModelList;
 
   @Override
   public TypeSafeConnection connect() {
-    SystemOneAdapter adapter = new SystemOneAdapter("compatible", baseUrl, model, Capabilities.full(supportsModelList),
-        apiKey, customHeaders(), CostExtractor.NONE, RequestIdExtractor.header("x-typesafe-request-id"), transport());
+    SystemOneAdapter adapter = new SystemOneAdapter("compatible", baseUrl, apiVersion, model,
+        Capabilities.full(supportsModelList), apiKey, customHeaders(), CostExtractor.NONE,
+        RequestIdExtractor.header("x-typesafe-request-id"), transport());
     return connection(adapter);
   }
 

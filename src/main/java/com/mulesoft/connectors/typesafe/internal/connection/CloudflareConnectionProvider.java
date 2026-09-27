@@ -50,8 +50,9 @@ public class CloudflareConnectionProvider extends AbstractRouteConnectionProvide
 
   @Override
   public TypeSafeConnection connect() {
-    CloudflareAdapter adapter = new CloudflareAdapter("cloudflare", RouteDefaults.cloudflareBaseUrl(accountId), model,
-        Capabilities.full(false), apiToken, customHeaders(), CostExtractor.NONE, RequestIdExtractor.NONE, transport());
+    CloudflareAdapter adapter = new CloudflareAdapter("cloudflare", RouteDefaults.cloudflareBaseUrl(accountId), "v1",
+        model, Capabilities.full(false), apiToken, customHeaders(), CostExtractor.NONE, RequestIdExtractor.NONE,
+        transport());
     return connection(adapter);
   }
 

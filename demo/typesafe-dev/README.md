@@ -7,7 +7,7 @@ stream past in the console.
 | | |
 |---|---|
 | Runtime | Mule **4.11.0**, Java 17 |
-| Connector | `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0-SNAPSHOT` |
+| Connector | `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0` |
 | Route | **OpenRouter** (real LLM calls); the key is read from `local.properties` |
 | Listener | `http://localhost:8081` |
 
@@ -27,7 +27,7 @@ stream past in the console.
    mvn -f ../../pom.xml clean install -DskipTests -DskipMunitTests
    ```
 
-   This publishes `mule4-typesafe-connector:1.0.0-SNAPSHOT` to `~/.m2`. Re-run it whenever you
+   This publishes `mule4-typesafe-connector:1.0.0` to `~/.m2`. Re-run it whenever you
    change the connector and want the demo to pick up the new build.
 3. An **OpenRouter API key** (`sk-or-v1-…`). Get one at <https://openrouter.ai/keys>.
 
@@ -75,8 +75,8 @@ committed by accident.
 
 **Palette tip.** If the TypeSafe module shows stale operations or the wrong icon, it is a
 cached extension model, not a bad build. Re-install the connector (§1 step 2), then
-*Maven → Update Project*, and if needed bump the connector version suffix (e.g.
-`1.0.0-SNAPSHOT-1`) so Studio treats it as new.
+*Maven → Update Project*, and if needed bump the connector version suffix again (the
+current build is `1.0.0`) so Studio treats it as new.
 
 ---
 
@@ -113,8 +113,8 @@ All are `GET` on `http://localhost:8081`.
 
 | Path             | Operation                     | Calls a provider? | This demo's flow                    |
 |------------------|-------------------------------|-------------------|-------------------------------------|
-| `/capabilities`  | [Util] Get Capabilities       | No (local)        | Per-route capability report.        |
-| `/models`        | [Util] List Models            | Yes               | Enumerates models on OpenRouter.    |
+| `/capabilities`  | [Util] Connection Get Capabilities | No (local)   | What each connected route supports. |
+| `/models`        | [Util] Connection List Models | Yes              | Models on each connected route.     |
 | `/validate`      | [Util] Validate Question Set  | No (local)        | Validates the `ticket-triage` set.  |
 | `/evaluate`      | [Decide] Evaluate             | Yes               | Full `ticket-triage` set on a ticket.|
 | `/ask`           | [Decide] Ask Yes/No           | Yes               | Single noul (yes/no) question.      |
@@ -126,16 +126,16 @@ All are `GET` on `http://localhost:8081`.
 
 ### What each operation does, and why this demo uses it
 
-- **`/capabilities` → [Util] Get Capabilities.** Reports what each connected route
+- **`/capabilities` → [Util] Connection Get Capabilities.** Reports what each connected route
   supports (Noul/Choice/Score, confidence, model listing, option/level ceilings). *Purpose:*
   discover a route's limits or feature-gate a flow. Here it shows the OpenRouter route's
   capabilities without spending anything.
 
-- **`/models` → [Util] List Models.** Lists the models available on the connected routes
+- **`/models` → [Util] Connection List Models.** Lists the models available on the connected routes
   as `{id, route}` entries. *Purpose:* populate a model picker or audit availability. Here
   it enumerates the models OpenRouter exposes.
 
-- **`/validate` → [Util] Validate Question Set.** Validates a question set locally, before
+- **`/validate` → [Util] Validate Question Set.** Checks a question set locally, before
   any billed call, returning `{valid, errors[], warnings[]}`. *Purpose:* fail fast on a
   malformed set during authoring. Here it validates the bundled `ticket-triage` set.
 

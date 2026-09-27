@@ -46,7 +46,7 @@ class CloudflareAdapterTest {
   }
 
   private CloudflareAdapter adapter() {
-    return new CloudflareAdapter("cloudflare", BASE, "typesafe/jev", Capabilities.full(false), "token", Map.of(),
+    return new CloudflareAdapter("cloudflare", BASE, "v1", "typesafe/jev", Capabilities.full(false), "token", Map.of(),
         CostExtractor.NONE, RequestIdExtractor.NONE, transport);
   }
 

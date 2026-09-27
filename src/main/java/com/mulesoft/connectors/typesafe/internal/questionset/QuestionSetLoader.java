@@ -50,7 +50,7 @@ public final class QuestionSetLoader {
    */
   public static QuestionSet load(String location, String name) {
     String resource = resourcePath(location, name);
-    try (InputStream in = classLoader().getResourceAsStream(resource)) {
+    try (InputStream in = open(resource)) {
       if (in == null) {
         throw new ModuleException("No question-set file '" + resource + "' on the classpath",
             TypeSafeErrorType.INVALID_QUESTION_SET);
@@ -90,15 +90,42 @@ public final class QuestionSetLoader {
   public static TreeSet<String> list(String location) {
     TreeSet<String> names = new TreeSet<>();
     String folder = normalizeFolder(location);
+    ClassLoader context = Thread.currentThread().getContextClassLoader();
+    ClassLoader own = QuestionSetLoader.class.getClassLoader();
+    collectFrom(context, folder, names);
+    if (own != context) {
+      collectFrom(own, folder, names);
+    }
+    return names;
+  }
+
+  private static void collectFrom(ClassLoader loader, String folder, TreeSet<String> names) {
+    if (loader == null) {
+      return;
+    }
     try {
-      Enumeration<URL> urls = classLoader().getResources(folder);
+      Enumeration<URL> urls = loader.getResources(folder);
       while (urls.hasMoreElements()) {
         collect(urls.nextElement(), folder, names);
       }
     } catch (IOException ignored) {
       // Fall through to whatever was collected; listing is advisory.
     }
-    return names;
+  }
+
+  private static InputStream open(String resource) {
+    ClassLoader context = Thread.currentThread().getContextClassLoader();
+    if (context != null) {
+      InputStream in = context.getResourceAsStream(resource);
+      if (in != null) {
+        return in;
+      }
+    }
+    ClassLoader own = QuestionSetLoader.class.getClassLoader();
+    if (own != null && own != context) {
+      return own.getResourceAsStream(resource);
+    }
+    return null;
   }
 
   private static void collect(URL url, String folder, TreeSet<String> names) {
@@ -162,10 +189,5 @@ public final class QuestionSetLoader {
     }
     String trimmed = location.trim();
     return trimmed.endsWith("/") ? trimmed : trimmed + "/";
-  }
-
-  private static ClassLoader classLoader() {
-    ClassLoader loader = Thread.currentThread().getContextClassLoader();
-    return loader != null ? loader : QuestionSetLoader.class.getClassLoader();
   }
 }

@@ -35,15 +35,22 @@ public class TypeSafeConnectionProvider extends AbstractRouteConnectionProvider 
   private String baseUrl;
 
   @Parameter
-  @Optional
+  @Optional(defaultValue = "v1")
+  @DisplayName("API version")
   @Placement(order = 3)
+  @Summary("Path version for this route. List Models calls GET /{apiVersion}/models.")
+  private String apiVersion;
+
+  @Parameter
+  @Optional
+  @Placement(order = 4)
   @Summary("Default model used when an operation does not specify one.")
   private String model;
 
   @Override
   public TypeSafeConnection connect() {
-    SystemOneAdapter adapter = new SystemOneAdapter("typesafe", baseUrl, model, Capabilities.full(true), apiKey,
-        customHeaders(), CostExtractor.NONE, RequestIdExtractor.header("x-typesafe-request-id"), transport());
+    SystemOneAdapter adapter = new SystemOneAdapter("typesafe", baseUrl, apiVersion, model, Capabilities.full(true),
+        apiKey, customHeaders(), CostExtractor.NONE, RequestIdExtractor.header("x-typesafe-request-id"), transport());
     return connection(adapter);
   }
 

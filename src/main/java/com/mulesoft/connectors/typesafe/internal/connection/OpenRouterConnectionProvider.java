@@ -45,6 +45,13 @@ public class OpenRouterConnectionProvider extends AbstractRouteConnectionProvide
   private String baseUrl;
 
   @Parameter
+  @Optional(defaultValue = "v1")
+  @DisplayName("API version")
+  @Placement(order = 4)
+  @Summary("Path version for this route. List Models calls GET /{apiVersion}/models.")
+  private String apiVersion;
+
+  @Parameter
   @Optional
   @DisplayName("HTTP Referer")
   @Placement(tab = "Advanced", order = 10)
@@ -67,8 +74,8 @@ public class OpenRouterConnectionProvider extends AbstractRouteConnectionProvide
     if (appTitle != null && !appTitle.isBlank()) {
       headers.put("X-Title", appTitle);
     }
-    SystemOneAdapter adapter = new SystemOneAdapter("openrouter", baseUrl, model, Capabilities.full(true), apiKey,
-        headers, CostExtractor.OPENROUTER, RequestIdExtractor.OPENROUTER, transport());
+    SystemOneAdapter adapter = new SystemOneAdapter("openrouter", baseUrl, apiVersion, model, Capabilities.full(true),
+        apiKey, headers, CostExtractor.OPENROUTER, RequestIdExtractor.OPENROUTER, transport());
     return connection(adapter);
   }
 

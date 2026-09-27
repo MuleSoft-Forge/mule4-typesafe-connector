@@ -63,7 +63,7 @@ class BatchOperationsTest {
     Capture<BatchAttributes> capture = new Capture<>();
     operations.evaluateBatch(config(), connection(new MockAdapter(0.9, 0)),
         json("[{\"id\":\"a\"},{\"id\":\"b\"},{\"id\":\"c\"}]"), json(NOUL_QUESTION), null, null, null, "id", 4, true,
-        1000, false, new RequestOptions(), capture);
+        1000, false, null, new RequestOptions(), capture);
 
     JsonNode payload = capture.payload();
     assertEquals(3, payload.size());
@@ -83,7 +83,7 @@ class BatchOperationsTest {
     ProviderAdapter adapter = spy(new MockAdapter(0.9, 0));
     Capture<BatchAttributes> capture = new Capture<>();
     operations.evaluateBatch(config(), connection(adapter), json("[{\"id\":\"a\"},{\"id\":\"a\"},{\"id\":\"b\"}]"),
-        json(NOUL_QUESTION), null, null, null, "id", 4, true, 1000, false, new RequestOptions(), capture);
+        json(NOUL_QUESTION), null, null, null, "id", 4, true, 1000, false, null, new RequestOptions(), capture);
 
     // Two identical states collapse to one billed call; the third distinct state is the second.
     verify(adapter, times(2)).evaluate(any());
@@ -96,7 +96,7 @@ class BatchOperationsTest {
     ProviderAdapter adapter = spy(new MockAdapter(0.9, 0));
     Capture<BatchAttributes> capture = new Capture<>();
     operations.evaluateBatch(config(), connection(adapter), json("[{\"id\":\"a\"},{\"id\":\"a\"}]"),
-        json(NOUL_QUESTION), null, null, null, "id", 4, false, 1000, false, new RequestOptions(), capture);
+        json(NOUL_QUESTION), null, null, null, "id", 4, false, 1000, false, null, new RequestOptions(), capture);
 
     verify(adapter, times(2)).evaluate(any());
     assertEquals(2, capture.payload().size());
@@ -114,7 +114,7 @@ class BatchOperationsTest {
 
     Capture<BatchAttributes> capture = new Capture<>();
     operations.evaluateBatch(config, connection, json("[{\"id\":\"a\"},{\"id\":\"b\"},{\"id\":\"c\"},{\"id\":\"d\"}]"),
-        json(NOUL_QUESTION), null, null, null, "id", 1, true, 1000, false, new RequestOptions(), capture);
+        json(NOUL_QUESTION), null, null, null, "id", 1, true, 1000, false, null, new RequestOptions(), capture);
 
     BatchAttributes attributes = capture.attributes;
     assertEquals(4, attributes.getTotal());
@@ -129,7 +129,7 @@ class BatchOperationsTest {
   void rejectsABatchOverTheItemLimit() {
     Capture<BatchAttributes> capture = new Capture<>();
     operations.evaluateBatch(config(), connection(new MockAdapter(0.9, 0)), json("[{\"id\":\"a\"},{\"id\":\"b\"}]"),
-        json(NOUL_QUESTION), null, null, null, "id", 4, true, 1, false, new RequestOptions(), capture);
+        json(NOUL_QUESTION), null, null, null, "id", 4, true, 1, false, null, new RequestOptions(), capture);
 
     assertNull(capture.result);
     assertNotNull(capture.error);
@@ -140,7 +140,7 @@ class BatchOperationsTest {
   void filterKeepsItemsClearingTheThreshold() {
     Capture<BatchAttributes> capture = new Capture<>();
     operations.filter(config(), connection(new MockAdapter(0.8, 0)), json("[{\"t\":\"x\"},{\"t\":\"y\"}]"), "relevant?",
-        0.5, 20, "t", 4, new RequestOptions(), capture);
+        0.5, 20, "t", 4, null, new RequestOptions(), capture);
 
     JsonNode payload = capture.payload();
     assertEquals(2, payload.get("kept").size());
@@ -155,7 +155,7 @@ class BatchOperationsTest {
   void filterDropsItemsBelowTheThreshold() {
     Capture<BatchAttributes> capture = new Capture<>();
     operations.filter(config(), connection(new MockAdapter(0.8, 0)), json("[{\"t\":\"x\"},{\"t\":\"y\"}]"), "relevant?",
-        0.95, 20, null, 4, new RequestOptions(), capture);
+        0.95, 20, null, 4, null, new RequestOptions(), capture);
 
     JsonNode payload = capture.payload();
     assertEquals(0, payload.get("kept").size());
@@ -167,7 +167,7 @@ class BatchOperationsTest {
     ProviderAdapter adapter = spy(new MockAdapter(0.8, 0));
     Capture<BatchAttributes> capture = new Capture<>();
     operations.filter(config(), connection(adapter), json("[{\"t\":\"a\"},{\"t\":\"b\"},{\"t\":\"c\"}]"), "relevant?",
-        0.5, 2, "t", 4, new RequestOptions(), capture);
+        0.5, 2, "t", 4, null, new RequestOptions(), capture);
 
     // Three items at chunkSize 2 is two chunks, so two billed calls.
     verify(adapter, times(2)).evaluate(any());
