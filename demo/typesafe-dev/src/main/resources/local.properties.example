@@ -1,0 +1,4 @@
+# Template for local secrets. Copy to local.properties (gitignored) and fill in.
+# The OpenRouter API key, sent by the TypeSafe connector as a Bearer token.
+typesafe.openrouter.apiKey=sk-or-v1-REPLACE_ME
+typesafe.apiKey=sk-or-v1-REPLACE_ME

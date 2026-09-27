@@ -1,6 +1,6 @@
-# Contributing to the Jev Connector
+# Contributing to the TypeSafe Connector
 
-Thanks for your interest in improving the Jev Connector. This document explains
+Thanks for your interest in improving the TypeSafe Connector. This document explains
 how to build the project, the quality bar every change must clear, and how to
 propose a change.
 
@@ -46,7 +46,7 @@ request:
   `CompletionCallback` and never sleep a runtime thread.
 - All JSON goes through `internal/util/Json`. Provider-reported fields and
   connector-computed fields (`derived`) are kept separate.
-- Errors surface as typed `JEV:*` errors via `ModuleException`.
+- Errors surface as typed `TYPESAFE:*` errors via `ModuleException`.
 
 ## Milestones
 
