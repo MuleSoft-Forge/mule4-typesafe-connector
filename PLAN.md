@@ -1,10 +1,10 @@
-# Jev Mule 4 Connector — Implementation Plan
+# TypeSafe Mule 4 Connector — Implementation Plan
 
 Sep 25, 2026 · @Amir Khan
 
 ## 1. Handover brief
 
-Build a Mule 4 Java SDK connector, **Jev Connector** (XML prefix `jev`), that calls TypeSafe's Jev decision model through five interchangeable routes and returns typed, chainable decisions to Mule flows. Target: Java 17, Mule SDK 1.12 forward-compatible build, first release `1.0.0`.
+Build a Mule 4 Java SDK connector, **TypeSafe Connector** (XML prefix `typesafe`), that calls TypeSafe's Jev decision model through five interchangeable routes and returns typed, chainable decisions to Mule flows. Target: Java 17, Mule SDK 1.12 forward-compatible build, first release `1.0.0`.
 
 Jev is not a chat model. It takes a `state` plus named typed questions (Noul = yes/no probability, Choice = option + distribution, Score = ordered rubric) and returns one typed answer per question. The connector's job is to make those answers first-class Mule values that drive Choice routers, Batch filters, error handlers and follow-up calls.
 
@@ -20,10 +20,10 @@ Jev is not a chat model. It takes a `state` plus named typed questions (Noul = y
 
 | Item | Value |
 | --- | --- |
-| Extension name | `Jev` (display: "Jev Connector") |
-| XML prefix / namespace | `jev` / `http://www.mulesoft.org/schema/mule/jev` |
-| Maven coordinates | `com.mulesoft.connectors:mule4-jev-connector` |
-| Java package root | `com.mulesoft.connectors.jev` with `api` (public types) and `internal` (everything else) |
+| Extension name | `TypeSafe` (display: "TypeSafe Connector") |
+| XML prefix / namespace | `typesafe` / `http://www.mulesoft.org/schema/mule/typesafe` |
+| Maven coordinates | `com.mulesoft.connectors:mule4-typesafe-connector` |
+| Java package root | `com.mulesoft.connectors.typesafe` with `api` (public types) and `internal` (everything else) |
 | Category | `Category.SELECT` (same as both references) |
 | License | Apache-2.0 (same as Inference Connector) |
 | Min Mule version | 4.9.0 (Java 17 floor; see section 5) |
@@ -43,11 +43,11 @@ Both reference connectors were cloned and read on 2026-09-25. They are good temp
 
 **What to copy, what to change**
 
-| Aspect | [Inference Connector](https://github.com/MuleSoft-AI-Chain-Project/mule-inference-connector) 1.2.0 | [Bedrock Connector](https://github.com/MuleSoft-AI-Chain-Project/mule-amazon-bedrock-connector) 1.1.0-SNAPSHOT | Jev Connector |
+| Aspect | [Inference Connector](https://github.com/MuleSoft-AI-Chain-Project/mule-inference-connector) 1.2.0 | [Bedrock Connector](https://github.com/MuleSoft-AI-Chain-Project/mule-amazon-bedrock-connector) 1.1.0-SNAPSHOT | TypeSafe Connector |
 | --- | --- | --- | --- |
 | Parent POM | `mule-modules-parent` 1.9.6, `mule-sdk-api` 0.11.4 | `mule-modules-parent` 1.9.0 | `mule-java-extension-parent` (latest ≥ 1.11.0) |
 | Extension class | `@Xml`, `@Extension(category=SELECT)`, `@ErrorTypes`, `@JavaVersionSupport(JAVA_17)`, `@SubTypeMapping` for proxy types | Same, plus `@RequiresEnterpriseLicense(allowEvaluationLicense=true)` | Copy Inference's set; no license annotation (open connector) |
-| Configs | One config per capability (text, vision, image, moderation) | Single config | Single config `jev:config` |
+| Configs | One config per capability (text, vision, image, moderation) | Single config | Single config `typesafe:config` |
 | Connection providers | One per vendor (32+), shared `BaseConnectionProvider` with proxy + TLS tabs | Basic + AssumeRole | One per route (5) + mock, shared base; copy the proxy/TLS parameter layout |
 | HTTP client lifecycle | Created in `initialise()`, legacy `HttpClientConfiguration` | AWS SDK (allowed exception) | **Change:** create in `start()`, stop in `stop()`, sdk-api client |
 | Request sending | Blocking `httpClient.send` | AWS SDK | **Change:** `sendAsync` + `CompletionCallback` non-blocking ops |
@@ -109,15 +109,15 @@ flowchart LR
 The recorder writes rolling statistics to a cluster-aware Object Store; sources poll it. That keeps sources decoupled from operation threads and works on CloudHub 2.0 replicas.
 
 ```
-mule-jev-connector/
+mule-typesafe-connector/
 ├── icon/icon.svg                         # connector icon (section 11)
 ├── formatter.xml                         # copied from Inference Connector
 ├── pom.xml
 ├── README.md, CHANGELOG.md, LICENSE.txt, SECURITY.md, CONTRIBUTING.md
 ├── docs/provider-contracts.md            # verified wire notes per route
-├── demo/jev-connector-demo/              # Mule app: triage flow (section 14)
+├── demo/typesafe-connector-demo/              # Mule app: triage flow (section 14)
 └── src/
-    ├── main/java/com/mulesoft/connectors/jev/
+    ├── main/java/com/mulesoft/connectors/typesafe/
     │   ├── api/                          # public, DataWeave-friendly types
     │   │   ├── question/                 # Question, NoulQuestion, ChoiceQuestion, ScoreQuestion, QuestionSet
     │   │   ├── answer/                   # DecisionResult, NoulAnswer, ChoiceAnswer, ScoreAnswer
@@ -125,9 +125,9 @@ mule-jev-connector/
     │   │   ├── policy/                   # DecisionPolicy, PolicyRule, Action enum
     │   │   └── proxy/                    # HttpProxyConfig + Default/Ntlm (copy Inference pattern)
     │   └── internal/
-    │       ├── extension/JevConnector.java
-    │       ├── config/JevConfiguration.java
-    │       ├── connection/               # JevConnection + providers (one per route) + base
+    │       ├── extension/TypeSafeConnector.java
+    │       ├── config/TypeSafeConfiguration.java
+    │       ├── connection/               # TypeSafeConnection + providers (one per route) + base
     │       ├── provider/                 # ProviderAdapter, SystemOneAdapter, CloudflareAdapter, MockAdapter, RouteProfile, Capabilities
     │       ├── engine/                   # DecisionEngine, RetryPolicy, FailoverRouter, BudgetGuard
     │       ├── cache/DecisionCache.java
@@ -137,7 +137,7 @@ mule-jev-connector/
     │       ├── metadata/                 # output + input resolvers, key resolvers
     │       ├── valueprovider/            # model ids, question-set files
     │       ├── validation/QuestionSetValidator.java
-    │       ├── error/                    # JevErrorType, providers, HttpErrorMapper
+    │       ├── error/                    # TypeSafeErrorType, providers, HttpErrorMapper
     │       └── util/                     # JSON (Jackson), hashing, redaction
     ├── main/resources/schema/            # JSON Schemas for @OutputJsonType / @InputJsonType
     └── test/
@@ -157,10 +157,10 @@ Use the forward-compatible parent with `min.mule.version` pinned to 4.9.0, so th
   <version><!-- latest >= 1.11.0; check Maven repo at build time --></version>
 </parent>
 <groupId>com.mulesoft.connectors</groupId>
-<artifactId>mule4-jev-connector</artifactId>
+<artifactId>mule4-typesafe-connector</artifactId>
 <version>1.0.0-SNAPSHOT</version>
 <packaging>mule-extension</packaging>
-<name>Jev Connector - Mule 4</name>
+<name>TypeSafe Connector - Mule 4</name>
 
 <properties>
   <min.mule.version>4.9.0</min.mule.version>
@@ -188,9 +188,9 @@ Use the forward-compatible parent with `min.mule.version` pinned to 4.9.0, so th
 
 ## 6. Configuration and connection providers
 
-One global element, `<jev:config>`, holds behaviour (defaults, cache, budget, stats); its connection provider holds transport (route, credentials, HTTP). This mirrors the Bedrock single-config layout while keeping Inference's one-provider-per-vendor pattern.
+One global element, `<typesafe:config>`, holds behaviour (defaults, cache, budget, stats); its connection provider holds transport (route, credentials, HTTP). This mirrors the Bedrock single-config layout while keeping Inference's one-provider-per-vendor pattern.
 
-**`JevConfiguration` parameters** (group them with `@Placement` tabs: General, Cache, Budget, Monitoring)
+**`TypeSafeConfiguration` parameters** (group them with `@Placement` tabs: General, Cache, Budget, Monitoring)
 
 | Parameter | Type | Default | Notes |
 | --- | --- | --- | --- |
@@ -198,13 +198,13 @@ One global element, `<jev:config>`, holds behaviour (defaults, cache, budget, st
 | `failOnUnsupportedCapability` | boolean | `true` | If false, missing fields (e.g. `confidence`) become null with a WARN |
 | `cacheEnabled` | boolean | `false` | Cache key = SHA-256 of canonical JSON of route + model + state + questions |
 | `cacheObjectStore` | ObjectStore ref | private persistent store | `@ObjectStoreReference`; TTL default 1 h |
-| `budgetMaxCallsPerWindow` / `budgetMaxInputTokensPerWindow` | long | unset | Enforced by `BudgetGuard`; exceed → `JEV:BUDGET_EXCEEDED` |
+| `budgetMaxCallsPerWindow` / `budgetMaxInputTokensPerWindow` | long | unset | Enforced by `BudgetGuard`; exceed → `TYPESAFE:BUDGET_EXCEEDED` |
 | `budgetWindow` | Duration (`value` + `TimeUnit`) | 1 DAY | Rolling window, cluster-wide via Object Store |
 | `pricePerMillionInputTokens` | BigDecimal | 0.042 | Used only for cost estimates in attributes and sources |
 | `statsEnabled` | boolean | `true` | Feeds drift/budget sources; stores counts and histograms, never state text |
 | `statsObjectStore` | ObjectStore ref | private persistent store | Cluster-aware so CloudHub 2.0 replicas share stats |
 
-**Connection providers** — all extend `AbstractJevConnectionProvider implements CachedConnectionProvider<JevConnection>, Startable, Stoppable`, which owns the HTTP client, TLS, proxy (copy Inference's `HttpProxyConfig` subtypes and Proxy/Security tabs), `responseTimeout` + `responseTimeoutUnit` (default 30 s), `maxConnections`, retry settings, and optional `customHeaders`.
+**Connection providers** — all extend `AbstractRouteConnectionProvider implements CachedConnectionProvider<TypeSafeConnection>, Startable, Stoppable`, which owns the HTTP client, TLS, proxy (copy Inference's `HttpProxyConfig` subtypes and Proxy/Security tabs), `responseTimeout` + `responseTimeoutUnit` (default 30 s), `maxConnections`, retry settings, and optional `customHeaders`.
 
 | `@Alias` | Display name | Adapter | Route-specific parameters | `validate()` call |
 | --- | --- | --- | --- | --- |
@@ -215,9 +215,9 @@ One global element, `<jev:config>`, holds behaviour (defaults, cache, budget, st
 | `cloudflare` | Cloudflare Workers AI | `CloudflareAdapter` | `accountId`, `apiToken` (`@Password`), `model` (default `typesafe/jev`), `tokenScope`: `USER` or `ACCOUNT` | `GET /client/v4/user/tokens/verify` (user tokens) or `/client/v4/accounts/{accountId}/tokens/verify` (account tokens) |
 | `mock` | Mock (testing) | `MockAdapter` | `fixturesLocation` (classpath JSON), `defaultNoul`, `latencyMs` | Always success |
 
-**Failover:** a separate optional config parameter `fallbackConfigs` (list of `jev:config` references, `@ConfigReference`) is tempting but adds cross-config lifecycle complexity. Instead, implement failover inside one connection: `AbstractJevConnectionProvider` accepts an optional `fallbacks` list of inline route definitions (same parameter groups, `@ParameterDsl(allowReferences=false)`). `FailoverRouter` tries primary then fallbacks on `CONNECTIVITY`, `RATE_LIMITED`, `OVERLOADED` and `TIMEOUT` only — never on `INVALID_QUESTION_SET` or `UNAUTHORIZED`. The route that answered is always in `attributes.provider`.
+**Failover:** a separate optional config parameter `fallbackConfigs` (list of `typesafe:config` references, `@ConfigReference`) is tempting but adds cross-config lifecycle complexity. Instead, implement failover inside one connection: `AbstractRouteConnectionProvider` accepts an optional `fallbacks` list of inline route definitions (same parameter groups, `@ParameterDsl(allowReferences=false)`). `FailoverRouter` tries primary then fallbacks on `CONNECTIVITY`, `RATE_LIMITED`, `OVERLOADED` and `TIMEOUT` only — never on `INVALID_QUESTION_SET` or `UNAUTHORIZED`. The route that answered is always in `attributes.provider`.
 
-**`JevConnection`** is immutable and thread-safe: it holds the started client, the resolved primary `ProviderAdapter`, fallback adapters, and `Capabilities` per adapter. It must not expose the raw `HttpClient`.
+**`TypeSafeConnection`** is immutable and thread-safe: it holds the started client, the resolved primary `ProviderAdapter`, fallback adapters, and `Capabilities` per adapter. It must not expose the raw `HttpClient`.
 
 **`Capabilities`** (per adapter, static for v1, overridable by verification): `supportsNoul/Choice/Score`, `returnsConfidence`, `supportsModelList`, `supportsStructuredInstructions`, `maxChoiceOptions`, `maxScoreLevels`. Operations consult these before sending.
 
@@ -286,7 +286,7 @@ Payloads are JSON streams (`Result<InputStream, DecisionAttributes>`, `applicati
 
 `noMatchOption` is a connector-side annotation. It is stripped before sending and drives `derived.isNoMatch` and the policy engine.
 
-**Chaining: `TraceEntry`** = `{ step, questionSetId, provider, model, stateHash, answersSummary, action, timestamp }`, where `answersSummary` holds only the choice/level/noul values (no state text). Flows accumulate a trace with `vars.jevTrace default [] + attributes.traceEntry`. v1.1 may add a DataWeave function (`@ExpressionFunctions`) to make this one call.
+**Chaining: `TraceEntry`** = `{ step, questionSetId, provider, model, stateHash, answersSummary, action, timestamp }`, where `answersSummary` holds only the choice/level/noul values (no state text). Flows accumulate a trace with `vars.typesafeTrace default [] + attributes.traceEntry`. v1.1 may add a DataWeave function (`@ExpressionFunctions`) to make this one call.
 
 ## 8. Operations
 
@@ -294,54 +294,54 @@ Twelve operations in four groups. Every operation that calls a provider is non-b
 
 | XML element | Display name | Calls provider | v1 |
 | --- | --- | --- | --- |
-| `jev:evaluate` | \[Decide\] Evaluate | Yes | Yes |
-| `jev:ask-noul` | \[Decide\] Ask Yes/No | Yes | Yes |
-| `jev:choose` | \[Decide\] Choose | Yes | Yes |
-| `jev:score` | \[Decide\] Score | Yes | Yes |
-| `jev:select-candidate` | \[Select\] Candidate | Yes | Yes |
-| `jev:apply-policy` | \[Policy\] Apply | No | Yes |
-| `jev:evaluate-batch` | \[Batch\] Evaluate | Yes | Yes |
-| `jev:filter` | \[Batch\] Filter | Yes | Yes |
-| `jev:rerank` | \[Batch\] Rerank | Yes | v1.1 |
-| `jev:validate-question-set` | \[Util\] Validate Question Set | No | Yes |
-| `jev:get-capabilities` | \[Util\] Get Capabilities | No | Yes |
-| `jev:list-models` | \[Util\] List Models | Yes | Yes |
+| `typesafe:evaluate` | \[Decide\] Evaluate | Yes | Yes |
+| `typesafe:ask-noul` | \[Decide\] Ask Yes/No | Yes | Yes |
+| `typesafe:choose` | \[Decide\] Choose | Yes | Yes |
+| `typesafe:score` | \[Decide\] Score | Yes | Yes |
+| `typesafe:select-candidate` | \[Select\] Candidate | Yes | Yes |
+| `typesafe:apply-policy` | \[Policy\] Apply | No | Yes |
+| `typesafe:evaluate-batch` | \[Batch\] Evaluate | Yes | Yes |
+| `typesafe:filter` | \[Batch\] Filter | Yes | Yes |
+| `typesafe:rerank` | \[Batch\] Rerank | Yes | v1.1 |
+| `typesafe:validate-question-set` | \[Util\] Validate Question Set | No | Yes |
+| `typesafe:get-capabilities` | \[Util\] Get Capabilities | No | Yes |
+| `typesafe:list-models` | \[Util\] List Models | Yes | Yes |
 
 **Shared parameters** (a `@ParameterGroup` named "Request options" on every provider-calling op): `modelOverride` (String, optional), `includeRawResponse` (boolean), `useCache` (config override of `cacheEnabled`), `step` (String label for `traceEntry.step`).
 
-### 8.1 `jev:evaluate` — the workhorse
+### 8.1 `typesafe:evaluate` — the workhorse
 
-- `state`: `@Content(primary = true)`, `TypedValue<Object>`, default `#[payload]`. Serialize via its media type: JSON/Java → JSON value; text → JSON string. Reject binary with `JEV:INVALID_STATE`.
+- `state`: `@Content(primary = true)`, `TypedValue<Object>`, default `#[payload]`. Serialize via its media type: JSON/Java → JSON value; text → JSON string. Reject binary with `TYPESAFE:INVALID_STATE`.
 - Exactly one of (`@ExclusiveOptionals(isOneRequired = true)`): `questionSet` (String, `@OfValues` listing classpath question-set files, `@MetadataKeyId`) or `questions` (`@Content` JSON, `@InputJsonType(schema = "schema/questions.json")`).
 - Output: JSON per section 7. With `questionSet`, an `OutputTypeResolver` builds the exact answer type per question id, so Studio/ACB autocompletes `payload.answers.team.choice`. With inline `questions`, output falls back to the generic schema `schema/decision-result.json`.
 - Validates locally first (section 3 limits + `Capabilities`), then cache → budget → engine.
 
-### 8.2 `jev:ask-noul`, `jev:choose`, `jev:score` — single-question shortcuts
+### 8.2 `typesafe:ask-noul`, `typesafe:choose`, `typesafe:score` — single-question shortcuts
 
 - Inline parameters instead of a question file: `instructions` (String), plus `criteriaTrue`/`criteriaFalse` (noul), `options` (Map\<String,String>, choose) or `levels` (List\<String>, score). `choose` also has `noMatchOption` (String, optional; if set and absent from `options`, it is added with description "None of the options apply").
 - Payload is the single answer object (not wrapped in `answers`), so flows read `payload.noul`, `payload.choice`, `payload.derived.level`.
 
-### 8.3 `jev:select-candidate` — dynamic Choice from upstream data
+### 8.3 `typesafe:select-candidate` — dynamic Choice from upstream data
 
 - `candidates`: `@Content` list of objects (e.g. DB rows, Salesforce queues). `idField`, `labelField`, `descriptionField`: field names (Strings). Users reshape upstream data with DataWeave if needed; no per-item expression evaluation in v1.
 - `query`: the state (default `#[payload]` is **not** used here; required, since payload is usually the candidate list). `instructions`: default "Which candidate best matches the request?". `includeNoMatch` (boolean, default true).
-- Builds `criteria` = `{ id: "label — description" }`; ids must be unique and non-empty, else `JEV:INVALID_QUESTION_SET`. More than 254 candidates (255 minus no-match) → `JEV:TOO_MANY_OPTIONS` in v1; v1.1 adds a tournament mode (chunks, winners, final round).
+- Builds `criteria` = `{ id: "label — description" }`; ids must be unique and non-empty, else `TYPESAFE:INVALID_QUESTION_SET`. More than 254 candidates (255 minus no-match) → `TYPESAFE:TOO_MANY_OPTIONS` in v1; v1.1 adds a tournament mode (chunks, winners, final round).
 - Payload: `{ selected: <original candidate object or null>, id, probability, confidence, isNoMatch, ranking: [{id, probability}] }`.
 
-### 8.4 `jev:apply-policy` — turn answers into an action
+### 8.4 `typesafe:apply-policy` — turn answers into an action
 
 - Input `decision` (default `#[payload]`, the output of any decide/select op). Policy from `policy` (`@Content` JSON, schema `schema/policy.json`) or the `policy` block of the question-set file named in `attributes.questionSetId`.
 - Policy per question id: Choice `{minProbability, minConfidence, minMargin, onNoMatch}`; Noul `{acceptAbove, rejectBelow}` (between = REVIEW); Score `{acceptLevels:[…], reviewLevels:[…], minConfidence}`. Combination rule: the most cautious outcome wins (REJECT > REVIEW > ACCEPT).
 - Payload: `{ action: "ACCEPT"|"REVIEW"|"REJECT", routeKey, reasons: ["team: margin 0.08 < 0.2"], perQuestion: {…} }`. `routeKey` = the accepted choice value, ready for a `<choice>` router.
-- `raiseOnReview` / `raiseOnReject` (booleans) throw `JEV:BELOW_THRESHOLD` / `JEV:REJECTED` for teams that prefer `on-error-continue` routing.
+- `raiseOnReview` / `raiseOnReject` (booleans) throw `TYPESAFE:BELOW_THRESHOLD` / `TYPESAFE:REJECTED` for teams that prefer `on-error-continue` routing.
 
-### 8.5 `jev:evaluate-batch` — many states, one question set
+### 8.5 `typesafe:evaluate-batch` — many states, one question set
 
-- `items`: `@Content` list; each item is a state. Optional `keyField` to carry an id through. `maxConcurrency` (default 4, max 32), `deduplicate` (default true, by state hash), `maxItems` (default 1000; larger → `JEV:BATCH_TOO_LARGE`, recommend a Mule Batch Job).
+- `items`: `@Content` list; each item is a state. Optional `keyField` to carry an id through. `maxConcurrency` (default 4, max 32), `deduplicate` (default true, by state hash), `maxItems` (default 1000; larger → `TYPESAFE:BATCH_TOO_LARGE`, recommend a Mule Batch Job).
 - One request per item, fanned out with `sendAsync` behind a semaphore; budget checked per item.
 - Payload: array of `{ index, key, status: "OK"|"ERROR"|"SKIPPED_BUDGET", answers, derived, error: {type, message} }`. Attributes: `BatchAttributes` = totals, succeeded, failed, cached, summed usage and cost. One failed item never fails the operation unless `failFast=true`.
 
-### 8.6 `jev:filter` and `jev:rerank` — packed questions
+### 8.6 `typesafe:filter` and `typesafe:rerank` — packed questions
 
 These ask many small questions about one shared context, so pack them into one request: each item becomes its own Noul question with structured `instructions` `{ "item": <item>, "question": "<text>" }`. This is the documented structured-instructions feature, and it cuts calls by the chunk size.
 
@@ -352,22 +352,22 @@ These ask many small questions about one shared context, so pack them into one r
 
 - `validate-question-set`: input `questionSet` or `questions`; returns `{ valid, errors[], warnings[] }`. Errors = hard API limits. Warnings = no no-match option on Choice, duplicate or empty option descriptions, Score with fewer than 3 levels, Choice with more than 20 options.
 - `get-capabilities`: returns `Capabilities` of the primary and each fallback route.
-- `list-models`: payload `[{ id, route }]`; routes without a list endpoint → `JEV:UNSUPPORTED_BY_PROVIDER`.
+- `list-models`: payload `[{ id, route }]`; routes without a list endpoint → `TYPESAFE:UNSUPPORTED_BY_PROVIDER`.
 
 ### 8.8 Reference flow (goes in the demo app and README)
 
 ```xml
-<jev:evaluate config-ref="Jev" questionSet="ticket-triage.json" step="triage">
-  <jev:state>#[{ subject: payload.Subject, body: payload.Description }]</jev:state>
-</jev:evaluate>
-<set-variable variableName="jevTrace" value="#[(vars.jevTrace default []) + attributes.traceEntry]"/>
-<jev:apply-policy config-ref="Jev" target="decision"/>
+<typesafe:evaluate config-ref="TypeSafe" questionSet="ticket-triage.json" step="triage">
+  <typesafe:state>#[{ subject: payload.Subject, body: payload.Description }]</typesafe:state>
+</typesafe:evaluate>
+<set-variable variableName="typesafeTrace" value="#[(vars.typesafeTrace default []) + attributes.traceEntry]"/>
+<typesafe:apply-policy config-ref="TypeSafe" target="decision"/>
 <choice>
   <when expression="#[vars.decision.action == 'ACCEPT']">
     <salesforce:query config-ref="SF">
       <salesforce:salesforce-query>SELECT Id, Name, Description FROM Group WHERE Type = 'Queue'</salesforce:salesforce-query>
     </salesforce:query>
-    <jev:select-candidate config-ref="Jev" query="#[vars.ticket.body]" idField="Id" labelField="Name" descriptionField="Description"/>
+    <typesafe:select-candidate config-ref="TypeSafe" query="#[vars.ticket.body]" idField="Id" labelField="Name" descriptionField="Description"/>
   </when>
   <otherwise>
     <flow-ref name="human-review"/>
@@ -383,37 +383,37 @@ Operations never call sources directly. `DecisionStatsRecorder` writes compact c
 
 | Source | Fires when | Key parameters | Payload |
 | --- | --- | --- | --- |
-| `jev:on-drift-detected` | A monitored metric moves past its threshold vs baseline | `questionSetId`, `questionId` (optional filters); `windowSize` (default 500 decisions); `baseline`: `FIRST_WINDOW` or `PREVIOUS_WINDOW`; `maxNoMatchRateIncrease` (0.10); `maxMeanConfidenceDrop` (0.10); `maxDistributionShift` (Jensen–Shannon, 0.10) | `{ metric, baseline, current, windowSize, questionSetId, questionId, windowEnd }` |
-| `jev:on-budget-threshold` | Usage in the current budget window crosses a percentage | `percent` (default 80); `metric`: `CALLS` or `INPUT_TOKENS` | `{ metric, used, limit, percent, estimatedCostUsd, windowStart }` |
-| `jev:on-provider-failover` | A request was served by a fallback route, or a route recovers | `includeRecoveries` (default true) | `{ from, to, reason, errorType, timestamp }` |
+| `typesafe:on-drift-detected` | A monitored metric moves past its threshold vs baseline | `questionSetId`, `questionId` (optional filters); `windowSize` (default 500 decisions); `baseline`: `FIRST_WINDOW` or `PREVIOUS_WINDOW`; `maxNoMatchRateIncrease` (0.10); `maxMeanConfidenceDrop` (0.10); `maxDistributionShift` (Jensen–Shannon, 0.10) | `{ metric, baseline, current, windowSize, questionSetId, questionId, windowEnd }` |
+| `typesafe:on-budget-threshold` | Usage in the current budget window crosses a percentage | `percent` (default 80); `metric`: `CALLS` or `INPUT_TOKENS` | `{ metric, used, limit, percent, estimatedCostUsd, windowStart }` |
+| `typesafe:on-provider-failover` | A request was served by a fallback route, or a route recovers | `includeRecoveries` (default true) | `{ from, to, reason, errorType, timestamp }` |
 
 **Firing rules:** a source fires once per breach, then re-arms only after the metric returns inside the threshold for one full window. Store the armed/fired state in the stats Object Store so restarts don't re-fire. Each source uses the SDK's scheduling strategy element (`<scheduling-strategy>`), default fixed frequency 60 s.
 
 **Drift metrics** per `questionSetId` + `questionId`: no-match rate (Choice with `noMatchOption`), mean confidence (Choice/Score), share of `REVIEW` actions (when `apply-policy` ran), and the distribution of choices or levels. Jensen–Shannon is chosen over PSI because it's bounded 0–1 and handles zero-probability bins without smoothing hacks.
 
-**v1.1 candidate:** `jev:on-shadow-disagreement`, where a secondary route answers asynchronously and the source fires when choices differ. It needs a shadow-call executor and doubles spend, so it waits until v1 is in use.
+**v1.1 candidate:** `typesafe:on-shadow-disagreement`, where a secondary route answers asynchronously and the source fires when choices differ. It needs a shadow-call executor and doubles spend, so it waits until v1 is in use.
 
 ## 10. Errors, retries, metadata and value providers
 
-Every failure surfaces as a typed `JEV:*` error with a parent Mule error type, so flows can catch either the specific or the generic one. Use one `JevErrorType` enum (Inference pattern) and one `ErrorTypeProvider` per operation group, and map HTTP responses in a single `HttpErrorMapper` (Bedrock's central-handler pattern).
+Every failure surfaces as a typed `TYPESAFE:*` error with a parent Mule error type, so flows can catch either the specific or the generic one. Use one `TypeSafeErrorType` enum (Inference pattern) and one `ErrorTypeProvider` per operation group, and map HTTP responses in a single `HttpErrorMapper` (Bedrock's central-handler pattern).
 
 | Error type | Parent | Raised when |
 | --- | --- | --- |
-| `JEV:UNAUTHORIZED` | `CLIENT_SECURITY` (child of `SECURITY`) | 401/403 from any route |
-| `JEV:RATE_LIMITED` | `CONNECTIVITY` | 429 after retries |
-| `JEV:OVERLOADED` | `CONNECTIVITY` | 529 or 503 after retries |
-| `JEV:TIMEOUT` | `CONNECTIVITY` | Response timeout after retries |
-| `JEV:CONNECTIVITY` | `CONNECTIVITY` | I/O failure, DNS, TLS |
-| `JEV:PROVIDER_VALIDATION` | `VALIDATION` | 400/422; message includes the provider's field detail |
-| `JEV:INVALID_QUESTION_SET` | `VALIDATION` | Local validation failed (no billed call made) |
-| `JEV:TOO_MANY_OPTIONS` | `VALIDATION` | Choice > 255 options or candidates > 254 |
-| `JEV:INVALID_STATE` | `VALIDATION` | Binary or empty state |
-| `JEV:BATCH_TOO_LARGE` | `VALIDATION` | `items` > `maxItems` |
-| `JEV:INVALID_RESPONSE` | `ANY` | Unparseable body, missing answer id, wrong answer type |
-| `JEV:UNSUPPORTED_BY_PROVIDER` | `ANY` | Capability absent on the route |
-| `JEV:BUDGET_EXCEEDED` | `ANY` | `BudgetGuard` refused the call |
-| `JEV:BELOW_THRESHOLD` / `JEV:REJECTED` | `ANY` | `apply-policy` with `raiseOnReview` / `raiseOnReject` |
-| `JEV:PROVIDER_ERROR` | `ANY` | Other 5xx after retries |
+| `TYPESAFE:UNAUTHORIZED` | `CLIENT_SECURITY` (child of `SECURITY`) | 401/403 from any route |
+| `TYPESAFE:RATE_LIMITED` | `CONNECTIVITY` | 429 after retries |
+| `TYPESAFE:OVERLOADED` | `CONNECTIVITY` | 529 or 503 after retries |
+| `TYPESAFE:TIMEOUT` | `CONNECTIVITY` | Response timeout after retries |
+| `TYPESAFE:CONNECTIVITY` | `CONNECTIVITY` | I/O failure, DNS, TLS |
+| `TYPESAFE:PROVIDER_VALIDATION` | `VALIDATION` | 400/422; message includes the provider's field detail |
+| `TYPESAFE:INVALID_QUESTION_SET` | `VALIDATION` | Local validation failed (no billed call made) |
+| `TYPESAFE:TOO_MANY_OPTIONS` | `VALIDATION` | Choice > 255 options or candidates > 254 |
+| `TYPESAFE:INVALID_STATE` | `VALIDATION` | Binary or empty state |
+| `TYPESAFE:BATCH_TOO_LARGE` | `VALIDATION` | `items` > `maxItems` |
+| `TYPESAFE:INVALID_RESPONSE` | `ANY` | Unparseable body, missing answer id, wrong answer type |
+| `TYPESAFE:UNSUPPORTED_BY_PROVIDER` | `ANY` | Capability absent on the route |
+| `TYPESAFE:BUDGET_EXCEEDED` | `ANY` | `BudgetGuard` refused the call |
+| `TYPESAFE:BELOW_THRESHOLD` / `TYPESAFE:REJECTED` | `ANY` | `apply-policy` with `raiseOnReview` / `raiseOnReject` |
+| `TYPESAFE:PROVIDER_ERROR` | `ANY` | Other 5xx after retries |
 
 **Retry and reconnection**
 
@@ -442,7 +442,7 @@ Ship an original icon at `icon/icon.svg`; the SDK picks it up for both Exchange 
 
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <title>Jev Connector</title>
+  <title>TypeSafe Connector</title>
   <circle cx="256" cy="256" r="256" fill="#E8F1FC"/>
   <g fill="none" stroke="#0B5CAD" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
     <path d="M104 256 H214"/>
@@ -465,7 +465,7 @@ Ship an original icon at `icon/icon.svg`; the SDK picks it up for both Exchange 
 - Add a PNG export (`icon/icon-256.png`) for the README banner and Exchange page; generate it in CI from the SVG so the two never drift.
 - Verify in Studio and ACB that the palette and the global-element dialog both show the icon. If Studio shows the generic icon, clear its modules cache before assuming the build is wrong.
 
-**Naming in the UI:** palette group "Jev"; operations use the bracket prefixes from section 8; connection providers are named by route ("TypeSafe (direct)", "OpenRouter"…); the config's display name is "Jev Config".
+**Naming in the UI:** palette group "TypeSafe"; operations use the bracket prefixes from section 8; connection providers are named by route ("TypeSafe (direct)", "OpenRouter"…); the config's display name is "TypeSafe Config".
 
 ## 12. Security, logging and data handling
 
@@ -476,7 +476,7 @@ Every `state` leaves the Mule runtime for a third party, so the connector defaul
 - **Transport:** HTTPS only for the four hosted routes; the `compatible` route allows HTTP but logs a WARN at start, as the SDK HTTP rules require. TLS context and proxy (including NTLM) are configurable on every provider.
 - **Data residency:** the connection provider's summary text names where data goes (e.g. "Sends state to OpenRouter, which forwards to TypeSafe"). The README carries a table of routes and processors so architects can choose per environment.
 - **Cache and stats:** the cache stores answers keyed by hash; it never stores state text. Stats store counts and histograms only. Both use app-private Object Stores by default.
-- **Input hardening:** cap state size (configurable, default 256 KB serialized) → `JEV:INVALID_STATE`; reject non-JSON-serializable objects early; never follow redirects to a different host.
+- **Input hardening:** cap state size (configurable, default 256 KB serialized) → `TYPESAFE:INVALID_STATE`; reject non-JSON-serializable objects early; never follow redirects to a different host.
 - **Dependency hygiene:** run OWASP dependency-check (or Snyk) in CI; Jackson is the only non-test runtime dependency.
 
 ## 13. Testing strategy
@@ -503,7 +503,7 @@ The connector ships with a README, a runnable demo app and two publication paths
 
 **Javadoc on every public parameter.** The SDK turns it into Studio tooltips; use `@Summary` for the one-liner and `@Example` for sample values.
 
-**Demo app** `demo/jev-connector-demo/` (Inference ships `demo/mule-inference-connector-openai-demo`):
+**Demo app** `demo/typesafe-connector-demo/` (Inference ships `demo/mule-inference-connector-openai-demo`):
 
 1. `POST /triage` → `evaluate` with `ticket-triage.json` → `apply-policy` → `select-candidate` against a static queue list → JSON response with the decision trace.
 2. `POST /filter` → `filter` over a list of comments with a spam question.
@@ -524,7 +524,7 @@ Six milestones to v1.0.0; each is a mergeable PR that leaves `mvn clean verify` 
 | # | Milestone | Deliverables | Done when |
 | --- | --- | --- | --- |
 | M0 | Skeleton | pom (section 5), extension class, empty config, `mock` provider, `icon/icon.svg`, formatter/impsort/checkstyle, README stub, `docs/provider-contracts.md` | Connector installs locally; Studio/ACB palette shows "Jev" with the custom icon; `mtf:test-connectivity` passes on `mock` |
-| M1 | Core transport | `AbstractJevConnectionProvider` (start/stop HTTP client, TLS, proxy, timeout), `typesafe` + `compatible` adapters, canonical model, validator, `HttpErrorMapper`, retry | `evaluate` works against WireMock for all three question types; every error row in section 10 has a passing test; no blocking calls on I/O threads |
+| M1 | Core transport | `AbstractRouteConnectionProvider` (start/stop HTTP client, TLS, proxy, timeout), `typesafe` + `compatible` adapters, canonical model, validator, `HttpErrorMapper`, retry | `evaluate` works against WireMock for all three question types; every error row in section 10 has a passing test; no blocking calls on I/O threads |
 | M2 | All routes | `openrouter`, `cloudflare`, `vercel` adapters, `Capabilities`, failover, `list-models`, `get-capabilities`, value providers | Contract tests green for 5 routes; failover MUnit green; section 3 *verify* items resolved and recorded |
 | M3 | Decide + chain | `ask-noul`, `choose`, `score`, `select-candidate`, `apply-policy`, `validate-question-set`, question-set files, DataSense output resolver, `traceEntry` | Section 8.8 flow runs end-to-end in MUnit against `mock`; DataSense autocompletes `payload.answers.team.choice` from a question-set file |
 | M4 | Scale + governance | `evaluate-batch`, `filter`, cache, `BudgetGuard`, stats recorder, three sources | 1,000-item batch completes with `maxConcurrency=8` against WireMock; budget stops at limit; each source fires once per breach and re-arms |
@@ -538,7 +538,7 @@ Six milestones to v1.0.0; each is a mergeable PR that leaves `mvn clean verify` 
 - [ ] Local validation rejects every documented API limit before any billed call.
 - [ ] Payload field names match TypeSafe's; connector-computed values only under `derived`.
 - [ ] No secret or state text in logs at INFO/DEBUG; TRACE payload logging needs the explicit flag.
-- [ ] Every `JEV:*` error has a test; coverage ≥ 80%.
+- [ ] Every `TYPESAFE:*` error has a test; coverage ≥ 80%.
 - [ ] Icon visible in Exchange, Studio and ACB.
 
 ## 16. Open questions to resolve
@@ -553,10 +553,10 @@ Six of the ten questions are resolved from primary sources on 2026-09-25 and fol
 | Q4 | Which OpenRouter surface | Resolved | System One API `POST https://openrouter.ai/api/v1/systemone`; skip the alpha Decisions API ([hub](https://openrouter.ai/docs/guides/community/jev)) |
 | Q5 | Request-id per route | Partly resolved | TypeSafe `x-typesafe-request-id`; Vercel `generationId`; OpenRouter and Cloudflare from live calls in M2 |
 | Q6 | `MuleErrors` parent for `UNAUTHORIZED` | Resolved | `CLIENT_SECURITY`, child of `SECURITY` ([mule-extensions-api](https://github.com/mulesoft/mule-extensions-api)) |
-| Q7 | Permission to use "Jev" in the name | Owner | Ask TypeSafe; fallback "Decision Models Connector" |
+| Q7 | Permission to use "TypeSafe" in the name | Owner | Named after the vendor API (like OpenAI, not ChatGPT); Jev stays the default model. Confirm with TypeSafe before Exchange |
 | Q8 | Value provider reading app question-set files at design time | Spike, M3 | Test in Studio and ACB; else free-text parameter |
 | Q9 | `min.mule.version` 4.9.0 with the sdk-api HTTP client | Spike, M0 | Build and inspect computed minimum; else legacy HTTP API |
-| Q10 | Maven groupId and publishing org | Resolved | `com.mulesoft.connectors:mule4-jev-connector` (owner decision) |
+| Q10 | Maven groupId and publishing org | Resolved | `com.mulesoft.connectors:mule4-typesafe-connector` (owner decision) |
 
 ## Sources
 

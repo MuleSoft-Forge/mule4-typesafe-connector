@@ -1,5 +1,9 @@
 <!-- icon banner: icon/icon.svg -->
-# Jev Connector for Mule 4
+# TypeSafe Connector for Mule 4
+
+The connector wraps TypeSafe's **System One** API. Its default model is **Jev**
+(`jev-latest`), TypeSafe's flagship System One model; the model is a setting, the same
+way an OpenAI connector wraps OpenAI and lets you pick GPT models.
 
 Jev is a decision model, not a chat model. You give it a **state** plus named, typed
 **questions** — Noul (yes/no probability), Choice (option + distribution) or Score
@@ -66,21 +70,21 @@ are local.
 
 | Operation | Alias | Billed | Purpose |
 | --- | --- | :---: | --- |
-| **[Decide] Evaluate Batch** | `evaluate-batch` | ✔ | Runs one question set over **many states**, fanned out with at most `maxConcurrency` calls in flight. Identical states are evaluated once (`deduplicate`), each item is budget-checked (a limit turns later items into `SKIPPED_BUDGET` rather than failing the batch), and cache/stats apply per item. Returns an array of `{index, key, status, answers, error}`; attributes carry the totals, with usage and cost billed once per unique decision. Rejects batches over `maxItems` with `JEV:BATCH_TOO_LARGE` — use a Mule Batch Job beyond that. |
+| **[Decide] Evaluate Batch** | `evaluate-batch` | ✔ | Runs one question set over **many states**, fanned out with at most `maxConcurrency` calls in flight. Identical states are evaluated once (`deduplicate`), each item is budget-checked (a limit turns later items into `SKIPPED_BUDGET` rather than failing the batch), and cache/stats apply per item. Returns an array of `{index, key, status, answers, error}`; attributes carry the totals, with usage and cost billed once per unique decision. Rejects batches over `maxItems` with `TYPESAFE:BATCH_TOO_LARGE` — use a Mule Batch Job beyond that. |
 | **[Select] Filter** | `filter` | ✔ | Keeps the items for which a yes/no question clears a probability `threshold`, packing several items per call (`chunkSize`) so a long list costs a handful of calls. Returns `{kept, dropped, scores}`. |
 
 ### Policy — local governance
 
 | Operation | Alias | Billed | Purpose |
 | --- | --- | :---: | --- |
-| **[Policy] Apply** | `apply-policy` | ✗ | Turns a decision into an `ACCEPT` / `REVIEW` / `REJECT` action plus a `routeKey` ready for a `<choice>` router, judged against policy thresholds supplied inline or from a question-set file's `policy` block. Pure local evaluation — no provider call, no connection. Can optionally raise `JEV:BELOW_THRESHOLD` on REVIEW or `JEV:REJECTED` on REJECT for error-based routing. |
+| **[Policy] Apply** | `apply-policy` | ✗ | Turns a decision into an `ACCEPT` / `REVIEW` / `REJECT` action plus a `routeKey` ready for a `<choice>` router, judged against policy thresholds supplied inline or from a question-set file's `policy` block. Pure local evaluation — no provider call, no connection. Can optionally raise `TYPESAFE:BELOW_THRESHOLD` on REVIEW or `TYPESAFE:REJECTED` on REJECT for error-based routing. |
 
 ### Utility — discovery and validation
 
 | Operation | Alias | Billed | Purpose |
 | --- | --- | :---: | --- |
 | **[Util] Get Capabilities** | `get-capabilities` | ✗ | Reports what each connected route supports — Noul/Choice/Score, confidence, model listing, and option/level ceilings — primary route first. Local; use to feature-gate a flow or discover a route's limits. |
-| **[Util] List Models** | `list-models` | ✔ | Lists the models available on the connected routes as `{id, route}` entries, primary first. Routes that cannot enumerate models are skipped; raises `JEV:UNSUPPORTED_BY_PROVIDER` if none can. Use to populate a model picker or audit availability. |
+| **[Util] List Models** | `list-models` | ✔ | Lists the models available on the connected routes as `{id, route}` entries, primary first. Routes that cannot enumerate models are skipped; raises `TYPESAFE:UNSUPPORTED_BY_PROVIDER` if none can. Use to populate a model picker or audit availability. |
 | **[Util] Validate Question Set** | `validate-question-set` | ✗ | Validates a question set locally, **before** any billed call, returning `{valid, errors[], warnings[]}`. Errors are the hard API limits; warnings flag legal-but-risky sets. Local; use as a fail-fast authoring check. |
 
 ## Sources
@@ -108,7 +112,7 @@ threshold.
 ```xml
 <dependency>
   <groupId>com.mulesoft.connectors</groupId>
-  <artifactId>mule4-jev-connector</artifactId>
+  <artifactId>mule4-typesafe-connector</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <classifier>mule-plugin</classifier>
 </dependency>
@@ -117,18 +121,18 @@ threshold.
 ## Quick start
 
 ```xml
-<jev:config name="Jev_Config">
-  <jev:openrouter-connection apiKey="${jev.openrouter.apiKey}" />
-</jev:config>
+<typesafe:config name="TypeSafe_Config">
+  <typesafe:openrouter-connection apiKey="${typesafe.openrouter.apiKey}" />
+</typesafe:config>
 
 <flow name="triage">
   <http:listener config-ref="HTTP_Listener_config" path="/triage" />
-  <jev:evaluate config-ref="Jev_Config" questionSet="ticket-triage" step="triage">
-    <jev:state>#[payload]</jev:state>
-  </jev:evaluate>
-  <jev:apply-policy config-ref="Jev_Config" questionSet="ticket-triage" target="decision">
-    <jev:decision>#[payload]</jev:decision>
-  </jev:apply-policy>
+  <typesafe:evaluate config-ref="TypeSafe_Config" questionSet="ticket-triage" step="triage">
+    <typesafe:state>#[payload]</typesafe:state>
+  </typesafe:evaluate>
+  <typesafe:apply-policy config-ref="TypeSafe_Config" questionSet="ticket-triage" target="decision">
+    <typesafe:decision>#[payload]</typesafe:decision>
+  </typesafe:apply-policy>
   <choice>
     <when expression="#[vars.decision.action == 'ACCEPT']"> <!-- auto-route --> </when>
     <when expression="#[vars.decision.action == 'REVIEW']"> <!-- send to a human --> </when>
@@ -137,14 +141,14 @@ threshold.
 </flow>
 ```
 
-Never hard-code credentials — read them from a property (e.g. `${jev.openrouter.apiKey}`).
+Never hard-code credentials — read them from a property (e.g. `${typesafe.openrouter.apiKey}`).
 
 ## Demo app
 
 A complete, runnable app that exercises **every** operation over HTTP lives in
-[`demo/jev-dev`](demo/jev-dev). It includes step-by-step instructions for both **Anypoint
+[`demo/typesafe-dev`](demo/typesafe-dev). It includes step-by-step instructions for both **Anypoint
 Studio** and **Anypoint Code Builder**, a logged flow per operation, and an offline
-smoke-test endpoint. See [`demo/jev-dev/README.md`](demo/jev-dev/README.md).
+smoke-test endpoint. See [`demo/typesafe-dev/README.md`](demo/typesafe-dev/README.md).
 
 The demo is standalone and is not wired into the connector build, so it never affects
 `mvn clean verify`.

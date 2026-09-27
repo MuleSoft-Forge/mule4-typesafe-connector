@@ -11,11 +11,11 @@
   </parent>
 
   <groupId>com.mulesoft.connectors</groupId>
-  <artifactId>mule4-jev-connector</artifactId>
+  <artifactId>mule4-typesafe-connector</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>mule-extension</packaging>
-  <name>Jev Connector - Mule 4</name>
-  <description>Mule 4 connector for the Jev decision model (TypeSafe systemOne) across interchangeable routes.</description>
+  <name>TypeSafe Connector - Mule 4</name>
+  <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes.</description>
 
   <licenses>
     <license>

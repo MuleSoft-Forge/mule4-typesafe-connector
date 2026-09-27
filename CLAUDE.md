@@ -18,13 +18,15 @@ cache, budget, and sources keep the call alive. They are not the product.
 
 ## What this is
 
-The **Jev Connector** — a Mule 4 Java SDK connector. Jev is a *decision* model
+The **TypeSafe Connector** — a Mule 4 Java SDK connector for TypeSafe's System One API.
+It is named after the vendor API, not the model (like OpenAI, not ChatGPT); `jev-latest`
+is the default model. Jev is a *decision* model
 (not a chat model): given a **state** plus named, typed **questions** (Noul /
 Choice / Score) it returns one typed **answer** per question.
 
-- Coordinates: `com.mulesoft.connectors:mule4-jev-connector:1.0.0-SNAPSHOT`
-- Packaging: `mule-extension` · XML prefix `jev` · namespace
-  `http://www.mulesoft.org/schema/mule/jev`
+- Coordinates: `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0-SNAPSHOT`
+- Packaging: `mule-extension` · XML prefix `typesafe` · namespace
+  `http://www.mulesoft.org/schema/mule/typesafe`
 - Parent: `org.mule.extensions:mule-java-extension-parent:1.12.3`
 - Java 17 · Apache-2.0 · min Mule Runtime **4.9.0**
 - Repo: `github.com/MuleSoft-Forge/mule4-jev-connector`
@@ -90,5 +92,5 @@ mvn -o test -Dtest=Foo    # JUnit-only runs can be offline
 - **Never commit or expose credentials/keys to git or GitHub** — including by
   copying the demo folder.
 - The demo's real key lives only in the gitignored
-  `demo/jev-dev/src/main/resources/local.properties`. Only
+  `demo/typesafe-dev/src/main/resources/local.properties`. Only
   `local.properties.example` (placeholder) is committed.

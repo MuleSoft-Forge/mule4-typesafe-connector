@@ -57,7 +57,7 @@ provider-reported cost (OpenRouter, Vercel); otherwise `tokens × configured pri
 
 | # | Item | Milestone | Status |
 | --- | --- | --- | --- |
-| Q2 | Cloudflare live response envelope (bare vs `result`) | M2 | **resolved** — `CloudflareAdapter.unwrap` accepts both; `success:false` or a non-empty `errors` array becomes `JEV:PROVIDER_ERROR` |
+| Q2 | Cloudflare live response envelope (bare vs `result`) | M2 | **resolved** — `CloudflareAdapter.unwrap` accepts both; `success:false` or a non-empty `errors` array becomes `TYPESAFE:PROVIDER_ERROR` |
 | Q3 | Vercel `confidence` present on Choice/Score | M2 | **resolved by contract** — `confidence` is passed through unchanged; when a route omits it the field is `null` (no live Vercel key available to confirm presence; behaviour is correct either way) |
 | Q5 | OpenRouter / Cloudflare request-id header | M2 / M5 | **resolved (OpenRouter live, 2026-09-26)** — OpenRouter returns header `x-generation-id` and the same value as body `id` (e.g. `gen-dec-…`). The connector reads header first, then body `id` (`RequestIdExtractor.OPENROUTER`). It does **not** use `x-request-id` (absent on the live call). Cloudflare still exposes none (`RequestIdExtractor.NONE`). TypeSafe direct remains `x-typesafe-request-id`. |
 | Q8 | Value provider can read app question-set files at design time | M3 | open |

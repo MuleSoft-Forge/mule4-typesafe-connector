@@ -1,9 +1,18 @@
 # Changelog
 
-All notable changes to the Jev Connector are documented here. The format follows
+All notable changes to the TypeSafe Connector are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses semantic versioning.
 
 ## [Unreleased]
+
+### Changed
+- **Renamed from "Jev Connector" to "TypeSafe Connector".** The connector wraps TypeSafe's
+  System One API and Jev is the value of its `model` setting, so it is named after the vendor
+  API, as OpenAI connectors are named for OpenAI rather than ChatGPT. The XML prefix and
+  namespace are now `typesafe` (`http://www.mulesoft.org/schema/mule/typesafe`), errors are
+  `TYPESAFE:*`, the artifact is `com.mulesoft.connectors:mule4-typesafe-connector`, the Java
+  package is `com.mulesoft.connectors.typesafe`, and the demo app is `demo/typesafe-dev`.
+  `jev-latest` remains the default model.
 
 ### Fixed
 - **Question and answer shapes now match TypeSafe.** `ask-noul`, `choose`, `score` and
@@ -17,7 +26,7 @@ All notable changes to the Jev Connector are documented here. The format follows
   Score answers by `derived.level` rather than the continuous `score`.
 - `evaluate` and `evaluate-batch` validate questions locally before calling a route, so a
   malformed set, including `options`/`levels`/`legend`/`criteriaTrue`/`criteriaFalse`, fails
-  as `JEV:INVALID_QUESTION_SET` without a billed call. The `mock` route reads only `criteria`
+  as `TYPESAFE:INVALID_QUESTION_SET` without a billed call. The `mock` route reads only `criteria`
   and answers in TypeSafe's shapes, so keyless tests catch contract drift.
 - **OpenRouter request id (M5).** Live OpenRouter `systemOne` responses carry the generation id
   as header `x-generation-id` (and body `id`), not `x-request-id`. The OpenRouter route now
@@ -30,7 +39,7 @@ All notable changes to the Jev Connector are documented here. The format follows
 - **M4 — Scale & governance.** The `evaluate-batch` and `filter` scale operations, fanned out
   behind a non-blocking concurrency limit with per-item de-duplication, budgeting, caching and
   stats. Governance foundation: a decision cache, a cluster-wide `BudgetGuard` (call and
-  input-token limits per rolling window, raising `JEV:BUDGET_EXCEEDED`), and a
+  input-token limits per rolling window, raising `TYPESAFE:BUDGET_EXCEEDED`), and a
   privacy-safe `DecisionStatsRecorder` — all backed by the runtime Object Store. Three
   monitoring polling sources — `on-drift-detected` (no-match rate, mean confidence and
   Jensen–Shannon distribution shift), `on-budget-threshold` and `on-provider-failover` —
@@ -41,7 +50,7 @@ All notable changes to the Jev Connector are documented here. The format follows
   classpath with a value provider; `validate-question-set`; DataSense output metadata so
   `evaluate` types its answers from the referenced question set; and an MUnit reference-flow
   suite that runs the §8.8 decide chain end-to-end against `mock`. Added a runnable demo app
-  under [`demo/jev-dev`](demo/jev-dev).
+  under [`demo/typesafe-dev`](demo/typesafe-dev).
 - **M2 — Routes & failover.** All five keyed routes (TypeSafe, OpenRouter, Vercel,
   Compatible, Cloudflare), ordered fallback routes for transient failures, per-route
   capabilities, and the `list-models` operation.
@@ -49,6 +58,6 @@ All notable changes to the Jev Connector are documented here. The format follows
   `DecisionEngine` with a runtime retry scheduler, and the governance/provider-contract docs.
 - **M0 — Skeleton.** Project scaffolding on the forward-compatible `mule-java-extension-parent`
   (1.12.3), `min.mule.version` 4.9.0, Apache-2.0 license. Extension class `Jev` (`jev` prefix),
-  single `<jev:config>`, `mock` connection provider and `MockAdapter`, `Capabilities` model,
-  full `JEV:*` error-type enum, `[Util] Get Capabilities` operation, connector icon, and the
+  single `<typesafe:config>`, `mock` connection provider and `MockAdapter`, `Capabilities` model,
+  full `TYPESAFE:*` error-type enum, `[Util] Get Capabilities` operation, connector icon, and the
   formatter / impsort / checkstyle quality gates.
