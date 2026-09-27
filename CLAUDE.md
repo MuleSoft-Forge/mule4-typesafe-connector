@@ -4,22 +4,38 @@ Guidance for Claude Code (and any AI assistant) working in this repo. Read
 this before making changes. For the product roadmap see [`PLAN.md`](PLAN.md);
 for what has shipped see [`CHANGELOG.md`](CHANGELOG.md).
 
+## Guiding principle
+
+**Think: Smart if-statements.**
+
+Jev is TypeSafe's model. It turns unstructured state into a value an `if` can
+read. The flow owns the if: the threshold, the route, the side effect. This
+connector exists to make that if possible in Mule.
+
+Before adding or changing a feature, name the if it serves. A change that hides
+the if inside the connector needs a reason the flow author can see. Routes,
+cache, budget, and sources keep the call alive. They are not the product.
+
 ## What this is
 
-The **Jev Connector** — a Mule 4 Java SDK connector. Jev is a *decision* model
+The **TypeSafe Connector** — a Mule 4 Java SDK connector for TypeSafe's System One API.
+It is named after the vendor API, not the model (like OpenAI, not ChatGPT); `jev-latest`
+is the default model. Jev is a *decision* model
 (not a chat model): given a **state** plus named, typed **questions** (Noul /
 Choice / Score) it returns one typed **answer** per question.
 
-- Coordinates: `com.mulesoft.connectors:mule4-jev-connector:1.0.0-SNAPSHOT`
-- Packaging: `mule-extension` · XML prefix `jev` · namespace
-  `http://www.mulesoft.org/schema/mule/jev`
+- Coordinates: `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0`
+- Packaging: `mule-extension` · XML prefix `typesafe` · namespace
+  `http://www.mulesoft.org/schema/mule/typesafe`
 - Parent: `org.mule.extensions:mule-java-extension-parent:1.12.3`
 - Java 17 · Apache-2.0 · min Mule Runtime **4.9.0**
-- Repo: `github.com/MuleSoft-Forge/mule4-jev-connector`
+- Repo: `github.com/MuleSoft-Forge/mule4-typesafe-connector`
 
-## Current status (2026-09-25)
+## Current status (2026-09-27)
 
 Milestones **M0–M4** are complete, merged to `develop` and `main`, and pushed.
+The GitHub `1.0.0` release completes the first M5 delivery; Maven Central and Exchange
+publication remain in progress.
 
 | Milestone | Scope | State |
 | --- | --- | --- |
@@ -28,7 +44,7 @@ Milestones **M0–M4** are complete, merged to `develop` and `main`, and pushed.
 | M2 | Five routes + ordered failover, `list-models` | ✅ |
 | M3 | decide/policy/utility ops, question sets, DataSense, MUnit suite | ✅ |
 | M4 | `evaluate-batch`, `filter`, cache, budget guard, stats, 3 sources | ✅ |
-| M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central + Exchange publish profiles | ⏳ next |
+| M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central + Exchange publish profiles | GitHub release complete; registries pending |
 
 ## Build & quality gates
 
@@ -77,5 +93,5 @@ mvn -o test -Dtest=Foo    # JUnit-only runs can be offline
 - **Never commit or expose credentials/keys to git or GitHub** — including by
   copying the demo folder.
 - The demo's real key lives only in the gitignored
-  `demo/jev-dev/src/main/resources/local.properties`. Only
+  `demo/typesafe-dev/src/main/resources/local.properties`. Only
   `local.properties.example` (placeholder) is committed.

@@ -3,7 +3,7 @@
 ## Our Pledge
 
 In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in the Jev Connector
+contributors and maintainers pledge to making participation in the TypeSafe Connector
 project and our community a harassment-free experience for everyone, regardless
 of gender identity and expression, sexual orientation, disability, physical
 appearance, body size, ethnicity, nationality, race, age, religion, level of
