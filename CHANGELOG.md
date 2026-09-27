@@ -11,8 +11,9 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   API, as OpenAI connectors are named for OpenAI rather than ChatGPT. The XML prefix and
   namespace are now `typesafe` (`http://www.mulesoft.org/schema/mule/typesafe`), errors are
   `TYPESAFE:*`, the artifact is `com.mulesoft.connectors:mule4-typesafe-connector`, the Java
-  package is `com.mulesoft.connectors.typesafe`, and the demo app is `demo/typesafe-dev`.
-  `jev-latest` remains the default model.
+  package is `com.mulesoft.connectors.typesafe`, the demo app is `demo/typesafe-dev`, and the
+  GitHub repo is `MuleSoft-Forge/mule4-typesafe-connector` (old URLs redirect). `jev-latest`
+  remains the default model.
 
 ### Fixed
 - **Question and answer shapes now match TypeSafe.** `ask-noul`, `choose`, `score` and

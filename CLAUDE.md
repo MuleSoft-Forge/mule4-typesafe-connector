@@ -29,7 +29,7 @@ Choice / Score) it returns one typed **answer** per question.
   `http://www.mulesoft.org/schema/mule/typesafe`
 - Parent: `org.mule.extensions:mule-java-extension-parent:1.12.3`
 - Java 17 · Apache-2.0 · min Mule Runtime **4.9.0**
-- Repo: `github.com/MuleSoft-Forge/mule4-jev-connector`
+- Repo: `github.com/MuleSoft-Forge/mule4-typesafe-connector`
 
 ## Current status (2026-09-26)
 
