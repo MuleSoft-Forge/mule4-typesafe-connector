@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mycompany</groupId>
 	<artifactId>typesafe-dev</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>mule-application</packaging>
 	<name>typesafe-dev</name>
 	<properties>
@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>com.mulesoftforge</groupId>
 			<artifactId>mule4-typesafe-connector</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1-SNAPSHOT</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>

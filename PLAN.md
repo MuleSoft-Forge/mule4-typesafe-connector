@@ -534,6 +534,28 @@ Six milestones to v1.0.0; each is a mergeable PR that leaves `mvn clean verify` 
 Anypoint Exchange publication was removed from the `1.0.0` boundary and is tracked
 explicitly in [#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7).
 
+### M6 — 1.0.1 adoption and release hardening
+
+M6 is a patch-only milestone. It may fix defects and release or consumption
+problems, but it does not add connector operations or intentionally change public
+payload schemas. The `rerank` operation, tournament selection, shadow evaluation
+source and DataWeave trace helper remain `1.1.0` work.
+
+Deliverables:
+
+- Prove clean-room Maven Central consumption and package the standalone demo
+  without a local connector install ([#9](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/9)).
+- Make the signed GitHub and Central release path reproducible
+  ([#10](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/10)).
+- Add and verify the Anypoint Exchange publication path
+  ([#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7)).
+- Fix production defects found while completing those adoption checks.
+
+M6 is done when the Java 17 build and all tests pass, the demo resolves the
+released connector from a clean Maven repository, GitHub and Central expose
+`1.0.1`, Exchange publication is verified, and the public connector API remains
+backward compatible with `1.0.0`.
+
 **Global acceptance criteria for v1.0.0**
 
 - [ ] No operation performs blocking I/O; provider calls use `sendAsync` + `CompletionCallback`.
