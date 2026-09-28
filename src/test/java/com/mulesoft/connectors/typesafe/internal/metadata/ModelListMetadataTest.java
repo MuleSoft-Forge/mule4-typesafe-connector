@@ -24,7 +24,8 @@ class ModelListMetadataTest {
     assertTrue(item.getFieldByName("description").isPresent());
     assertTrue(item.getFieldByName("release_date").isPresent());
     assertTrue(item.getFieldByName("route").isPresent());
-    assertEquals(4, item.getFields().size());
+    assertTrue(item.getFieldByName("display_name").isPresent());
+    assertEquals(5, item.getFields().size());
   }
 
   @Test

@@ -18,6 +18,15 @@ public interface ProviderAdapter {
   String routeName();
 
   /**
+   * A credential-free description of the endpoint used by Test Connection, suitable for logs and validation errors.
+   *
+   * @return the HTTP method and URL, or the route name when the adapter has no remote endpoint.
+   */
+  default String connectionTestTarget() {
+    return routeName();
+  }
+
+  /**
    * @return the static capabilities of this route.
    */
   Capabilities capabilities();

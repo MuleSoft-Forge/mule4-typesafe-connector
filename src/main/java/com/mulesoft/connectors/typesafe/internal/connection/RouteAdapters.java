@@ -4,6 +4,7 @@ import com.mulesoft.connectors.typesafe.internal.http.HttpTransport;
 import com.mulesoft.connectors.typesafe.internal.provider.Capabilities;
 import com.mulesoft.connectors.typesafe.internal.provider.CloudflareAdapter;
 import com.mulesoft.connectors.typesafe.internal.provider.CostExtractor;
+import com.mulesoft.connectors.typesafe.internal.provider.OpenRouterAdapter;
 import com.mulesoft.connectors.typesafe.internal.provider.ProviderAdapter;
 import com.mulesoft.connectors.typesafe.internal.provider.RequestIdExtractor;
 import com.mulesoft.connectors.typesafe.internal.provider.SystemOneAdapter;
@@ -25,7 +26,7 @@ public final class RouteAdapters {
     String model = route.getModel();
     switch (route.getRoute()) {
       case OPENROUTER :
-        return new SystemOneAdapter("openrouter", orDefault(route.getBaseUrl(), RouteDefaults.OPENROUTER_BASE_URL),
+        return new OpenRouterAdapter("openrouter", orDefault(route.getBaseUrl(), RouteDefaults.OPENROUTER_BASE_URL),
             route.getApiVersion(), orDefault(model, RouteDefaults.OPENROUTER_MODEL), Capabilities.full(true),
             route.getApiKey(), customHeaders, CostExtractor.OPENROUTER, RequestIdExtractor.OPENROUTER, transport);
       case VERCEL :

@@ -51,6 +51,11 @@ class CloudflareAdapterTest {
   }
 
   @Test
+  void connectionTestTargetUsesCloudflareModelPath() {
+    assertEquals("POST " + BASE + "/typesafe/jev", adapter().connectionTestTarget());
+  }
+
+  @Test
   void nestsBodyUnderInputPostsToModelPathAndUnwrapsEnvelope() {
     String wrapped = "{\"result\":{\"model\":\"cf\",\"answers\":{\"q\":{\"type\":\"noul\",\"noul\":0.9}}},"
         + "\"success\":true,\"errors\":[]}";

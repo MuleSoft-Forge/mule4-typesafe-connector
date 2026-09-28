@@ -21,14 +21,20 @@ public interface RequestIdExtractor {
 
   /**
    * OpenRouter exposes the generation id as header {@code x-generation-id}, and repeats it as body {@code id}. Prefer
-   * the header; fall back to the body field when the header is absent.
+   * the header, then the body field. Non-generation endpoints such as {@code GET /models} expose neither but do return
+   * Cloudflare's per-request {@code cf-ray}; use that as a support-correlation fallback.
    */
   RequestIdExtractor OPENROUTER = (response, body) -> {
     String headerId = response.header("x-generation-id");
     if (headerId != null && !headerId.isBlank()) {
       return headerId;
     }
-    return textOrNull(body.path("id"));
+    String bodyId = textOrNull(body.path("id"));
+    if (bodyId != null) {
+      return bodyId;
+    }
+    String edgeTraceId = response.header("cf-ray");
+    return edgeTraceId != null && !edgeTraceId.isBlank() ? edgeTraceId : null;
   };
 
   /**
