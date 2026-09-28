@@ -14,7 +14,7 @@
        Anypoint org id (required by Exchange Maven Facade). -->
   <groupId>${connector.groupId}</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2-SNAPSHOT</version>
   <packaging>mule-extension</packaging>
   <name>TypeSafe Connector - Mule 4</name>
   <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes. Documentation: https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/</description>
