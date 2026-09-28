@@ -1,5 +1,6 @@
 package com.mulesoft.connectors.typesafe.internal.source;
 
+import org.mule.runtime.api.connection.ConnectionException;
 import org.mule.sdk.api.annotation.Alias;
 import org.mule.sdk.api.annotation.param.Config;
 import org.mule.sdk.api.annotation.param.Connection;
@@ -8,6 +9,7 @@ import org.mule.sdk.api.annotation.param.Optional;
 import org.mule.sdk.api.annotation.param.Parameter;
 import org.mule.sdk.api.annotation.param.display.DisplayName;
 import org.mule.sdk.api.annotation.param.display.Summary;
+import org.mule.sdk.api.connectivity.ConnectionProvider;
 import org.mule.sdk.api.runtime.operation.Result;
 import org.mule.sdk.api.runtime.source.PollContext;
 import org.mule.sdk.api.runtime.source.PollingSource;
@@ -42,7 +44,10 @@ public class BudgetThresholdSource extends PollingSource<InputStream, Void> {
   @Config
   private TypeSafeConfiguration config;
 
+  /** Sources receive a provider, not a connection; see Mule SDK sources-config-connection. */
   @Connection
+  private ConnectionProvider<TypeSafeConnection> connectionProvider;
+
   private TypeSafeConnection connection;
 
   @Parameter
@@ -57,12 +62,19 @@ public class BudgetThresholdSource extends PollingSource<InputStream, Void> {
 
   @Override
   protected void doStart() {
-    // No resources to acquire; state lives in the stats Object Store.
+    try {
+      connection = connectionProvider.connect();
+    } catch (ConnectionException e) {
+      throw new IllegalStateException("Could not connect On Budget Threshold source", e);
+    }
   }
 
   @Override
   protected void doStop() {
-    // Nothing to release.
+    if (connection != null) {
+      connectionProvider.disconnect(connection);
+      connection = null;
+    }
   }
 
   @Override

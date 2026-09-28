@@ -5,6 +5,8 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-28
+
 ### Added
 - **Anypoint Exchange publish path ([#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7)).**
   Maven profile `exchange` deploys via Exchange Maven Facade v3 with `groupId` set to the Anypoint
@@ -14,6 +16,12 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   Verified by publishing live Central **`1.0.0`** (not SNAPSHOT) to a private org.
 
 ### Fixed
+- **Governance sources fail to deploy (`IllegalModelDefinitionException` on `@Connection`).**
+  Studio website verification (Sources audit) could not start `on-budget-threshold`,
+  `on-drift-detected`, or `on-provider-failover`: each injected `@Connection TypeSafeConnection`,
+  but Mule sources must inject `ConnectionProvider` and call `connect()` / `disconnect()`
+  ([SDK](https://docs.mulesoft.com/mule-sdk/latest/sources-config-connection)). All three sources
+  now follow that contract ([PR #18](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/pull/18)).
 - **OpenRouter `list-models` empty catalog ([#13](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/13)).**
   OpenRouter returns `{ data: [{ id, name, description, created }, ...] }`. The connector only read TypeSafe's
   `{ models: [{ name, description, release_date }] }`, so HTTP 200 became an empty payload. OpenRouter cards are now
