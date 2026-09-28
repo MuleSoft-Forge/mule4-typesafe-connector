@@ -175,7 +175,8 @@ class SystemOneAdapterTest {
         + "\"description\":\"Not a TypeSafe model\"," + "\"created\":1725989882"
         + "}],\"total_count\":3,\"links\":{\"next\":null}}";
     when(transport.send(any(HttpConstants.Method.class), eq("https://openrouter.ai/api/v1/models"), anyMap(), any()))
-        .thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, body, Map.of())));
+        .thenReturn(CompletableFuture
+            .completedFuture(new RawHttpResponse(200, body, Map.of("cf-ray", "a4222f2e1d545621-ARN"))));
 
     SystemOneAdapter adapter = new OpenRouterAdapter("openrouter", "https://openrouter.ai/api/", "v1",
         "~typesafe/jev-latest", Capabilities.full(true), "key", Map.of(), CostExtractor.OPENROUTER,
@@ -184,7 +185,7 @@ class SystemOneAdapterTest {
     ModelListPage page = adapter.listModels().join();
 
     assertEquals(200, page.statusCode());
-    assertNull(page.requestId());
+    assertEquals("a4222f2e1d545621-ARN", page.requestId());
     assertEquals(1, page.models().size());
     assertEquals("typesafe/jev-router", page.models().get(0).name());
     assertEquals("Jev through OpenRouter", page.models().get(0).description());

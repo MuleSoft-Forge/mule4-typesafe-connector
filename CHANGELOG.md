@@ -13,7 +13,8 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   `display_name` ← catalog `name` when it differs from `id`). The public OpenRouter endpoint contains its whole
   458-model catalog, so its route adapter restricts results to OpenRouter's `typesafe/` vendor namespace. Catalog
   scoping is a generic route-adapter hook so other broad gateway catalogs can define their own TypeSafe namespace
-  without changing the utility operation. TypeSafe responses are unchanged.
+  without changing the utility operation. OpenRouter model-list responses have no generation ID, so `requestId` falls
+  back to their per-request `cf-ray` trace. TypeSafe responses are unchanged.
 - **Studio metadata on OpenRouter config after live model list.** Design-time `ModelValueProvider` no longer dumps the
   full OpenRouter catalog into the model dropdown (hundreds of ids broke Studio metadata serialization). It keeps static
   defaults plus a capped preferred sample; runtime `list-models` still returns the full catalog.
