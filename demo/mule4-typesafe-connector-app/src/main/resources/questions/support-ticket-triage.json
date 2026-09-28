@@ -1,0 +1,35 @@
+{
+  "id": "support-ticket-triage",
+  "version": "1.0.0",
+  "questions": {
+    "team": {
+      "type": "choice",
+      "instructions": "Which team should own this ticket?",
+      "criteria": {
+        "billing": "Payments, invoices, refunds, or subscriptions.",
+        "technical": "Product, integration, or API problems.",
+        "other": "None of the listed categories apply."
+      },
+      "noMatchOption": "other"
+    },
+    "urgent": {
+      "type": "noul",
+      "instructions": "Does this ticket need a fast response?",
+      "criteria": {
+        "true": "An outage, deadline, lost revenue, or escalating customer.",
+        "false": "A routine request with no time pressure."
+      }
+    }
+  },
+  "policy": {
+    "team": {
+      "minProbability": 0.7,
+      "minMargin": 0.15,
+      "onNoMatch": "REVIEW"
+    },
+    "urgent": {
+      "acceptAbove": 0.7,
+      "rejectBelow": 0.3
+    }
+  }
+}
