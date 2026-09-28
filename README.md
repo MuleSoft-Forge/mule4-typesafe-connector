@@ -112,12 +112,15 @@ threshold.
 
 ```xml
 <dependency>
-  <groupId>com.mulesoft.connectors</groupId>
+  <groupId>com.mulesoftforge</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
   <version>1.0.0</version>
   <classifier>mule-plugin</classifier>
 </dependency>
 ```
+
+Published to Maven Central under the Forge namespace
+[`com.mulesoftforge`](https://central.sonatype.com/search?q=g:com.mulesoftforge).
 
 ## Quick start
 

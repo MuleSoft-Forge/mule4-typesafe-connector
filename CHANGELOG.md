@@ -12,7 +12,7 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   System One API and Jev is the value of its `model` setting, so it is named after the vendor
   API, as OpenAI connectors are named for OpenAI rather than ChatGPT. The XML prefix and
   namespace are now `typesafe` (`http://www.mulesoft.org/schema/mule/typesafe`), errors are
-  `TYPESAFE:*`, the artifact is `com.mulesoft.connectors:mule4-typesafe-connector`, the Java
+  `TYPESAFE:*`, the artifact is `com.mulesoftforge:mule4-typesafe-connector`, the Java
   package is `com.mulesoft.connectors.typesafe`, the demo app is `demo/typesafe-dev`, and the
   GitHub repo is `MuleSoft-Forge/mule4-typesafe-connector` (old URLs redirect). `jev-latest`
   remains the default model.

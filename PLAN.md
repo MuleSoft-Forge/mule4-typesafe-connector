@@ -22,7 +22,7 @@ Jev is not a chat model. It takes a `state` plus named typed questions (Noul = y
 | --- | --- |
 | Extension name | `TypeSafe` (display: "TypeSafe Connector") |
 | XML prefix / namespace | `typesafe` / `http://www.mulesoft.org/schema/mule/typesafe` |
-| Maven coordinates | `com.mulesoft.connectors:mule4-typesafe-connector` |
+| Maven coordinates | `com.mulesoftforge:mule4-typesafe-connector` |
 | Java package root | `com.mulesoft.connectors.typesafe` with `api` (public types) and `internal` (everything else) |
 | Category | `Category.SELECT` (same as both references) |
 | License | Apache-2.0 (same as Inference Connector) |
@@ -556,7 +556,7 @@ Six of the ten questions are resolved from primary sources on 2026-09-25 and fol
 | Q7 | Permission to use "TypeSafe" in the name | Owner | Named after the vendor API (like OpenAI, not ChatGPT); Jev stays the default model. Confirm with TypeSafe before Exchange |
 | Q8 | Value provider reading app question-set files at design time | Spike, M3 | Test in Studio and ACB; else free-text parameter |
 | Q9 | `min.mule.version` 4.9.0 with the sdk-api HTTP client | Spike, M0 | Build and inspect computed minimum; else legacy HTTP API |
-| Q10 | Maven groupId and publishing org | Resolved | `com.mulesoft.connectors:mule4-typesafe-connector` (owner decision) |
+| Q10 | Maven groupId and publishing org | Resolved | `com.mulesoftforge:mule4-typesafe-connector` (Forge Central namespace, same as mule-infa-mdm-connector) |
 
 ## Sources
 

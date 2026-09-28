@@ -7,7 +7,7 @@ stream past in the console.
 | | |
 |---|---|
 | Runtime | Mule **4.11.0**, Java 17 |
-| Connector | `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0` |
+| Connector | `com.mulesoftforge:mule4-typesafe-connector:1.0.0` |
 | Route | **OpenRouter** (real LLM calls); the key is read from `local.properties` |
 | Listener | `http://localhost:8081` |
 
@@ -27,7 +27,7 @@ stream past in the console.
    mvn -f ../../pom.xml clean install -DskipTests -DskipMunitTests
    ```
 
-   This publishes `mule4-typesafe-connector:1.0.0` to `~/.m2`. Re-run it whenever you
+   This publishes `com.mulesoftforge:mule4-typesafe-connector:1.0.0` to `~/.m2`. Re-run it whenever you
    change the connector and want the demo to pick up the new build.
 3. An **OpenRouter API key** (`sk-or-v1-…`). Get one at <https://openrouter.ai/keys>.
 
