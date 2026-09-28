@@ -31,8 +31,7 @@ Harness: follow [`website/docs/connectors/mule4-typesafe-connector/`](../../../.
 | 7 | [Filter](../../../../website/docs/connectors/mule4-typesafe-connector/operations/filter.md) | `select-filter` | **verified** (Studio-commented) — Studio 2026-09-28 |
 | 8 | [Apply Policy](../../../../website/docs/connectors/mule4-typesafe-connector/operations/apply-policy.md) | `policy-apply` | **verified** (Studio-commented) — Studio 2026-09-28 |
 | 9 | [Sources — On Budget Threshold](../../../../website/docs/connectors/mule4-typesafe-connector/sources.md#on-budget-threshold) | `source-on-budget-threshold` + `source-budget-driver` | **verified** (Studio-commented) — Studio 2026-09-28; also confirms [#18](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/pull/18) |
-| 10 | [Sources — On Drift Detected](../../../../website/docs/connectors/mule4-typesafe-connector/sources.md#on-drift-detected) | `source-on-drift-detected` | **deferred** — recorder always rolls at 500 (`DEFAULT_WINDOW_SIZE`); source `windowSize` only gates min samples. Mock answers are constant (no confidence/distribution shift). Studio-commented. |
-| 11 | [Sources — On Provider Failover](../../../../website/docs/connectors/mule4-typesafe-connector/sources.md#on-provider-failover) | `source-on-provider-failover` + `source-failover-driver` | **verified** (Studio-commented) — Studio 2026-09-28 |
+| 10 | [Sources — On Provider Failover](../../../../website/docs/connectors/mule4-typesafe-connector/sources.md#on-provider-failover) | `source-on-provider-failover` + `source-failover-driver` | **verified** (Studio-commented) — Studio 2026-09-28 |
 
 ## Studio run — On Provider Failover (passed)
 
@@ -156,7 +155,7 @@ Scatter-gather on Set Up `T-1001` with website options / `step="routing"`:
 | TypeSafe | billing | technical | `jev-1.13.0` | ESTIMATE |
 | OpenRouter | billing | technical | `typesafe/jev-1.13-20260917` | PROVIDER |
 
-Matches Evaluate’s team answer. Website updated. Note TypeSafe live log showed `derived.margin` as `0.6000000000000001` (float noise) — logged as C3.
+Matches Evaluate’s team answer. Website updated.
 
 ## Expected — Choose
 

@@ -772,26 +772,6 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	</flow> [STUDIO] -->
 
 	<!-- ================================================================== -->
-	<!-- Sources: On Drift Detected — deferred (recorder window fixed at 500)        -->
-	<!-- Website: sources.md                                               -->
-	<!-- ================================================================== -->
-<!-- [STUDIO:"source-on-drift-detected"]<flow name="source-on-drift-detected" doc:name="source-on-drift-detected">
-		<typesafe:on-drift-detected
-			config-ref="TypeSafe_Config_Monitoring"
-			questionSetId="support-ticket-triage"
-			windowSize="500"
-			maxMeanConfidenceDrop="0.10"
-			doc:name="On Drift Detected">
-			<scheduling-strategy>
-				<fixed-frequency frequency="60" timeUnit="SECONDS" />
-			</scheduling-strategy>
-		</typesafe:on-drift-detected>
-		<logger level="INFO" doc:name="Log drift"
-			message="#[output text/plain &#45;&#45;- '[on-drift-detected&#93; payload=' ++ write(payload, 'application/json')&#93;" />
-	</flow> [STUDIO] -->
-
-
-	<!-- ================================================================== -->
 	<!-- Sources: On Provider Failover — verified; Studio-commented -->
 	<!-- Website: sources.md                                               -->
 		<!-- ================================================================== -->
