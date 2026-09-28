@@ -37,6 +37,10 @@ Milestones **M0–M5** are complete, merged to `main`, and released as `1.0.0`
 on GitHub and Maven Central (`com.mulesoftforge:mule4-typesafe-connector:1.0.0`).
 Anypoint Exchange publication is explicitly deferred to
 [#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7).
+Development now targets `1.0.1-SNAPSHOT` under
+[M6](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/milestone/2):
+adoption and release hardening only, with no planned new operations or public
+schema changes.
 
 | Milestone | Scope | State |
 | --- | --- | --- |
@@ -46,6 +50,7 @@ Anypoint Exchange publication is explicitly deferred to
 | M3 | decide/policy/utility ops, question sets, DataSense, MUnit suite | ✅ |
 | M4 | `evaluate-batch`, `filter`, cache, budget guard, stats, 3 sources | ✅ |
 | M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central publication | ✅ — Exchange follow-up tracked in #7 |
+| M6 | 1.0.1 adoption: clean Central consumption, reproducible release path, Exchange publication, stabilization fixes | 🚧 — #7, #9, #10 |
 
 ## Build & quality gates
 
