@@ -15,6 +15,7 @@ import org.mule.sdk.api.annotation.param.display.DisplayName;
 import org.mule.sdk.api.annotation.param.display.Placement;
 import org.mule.sdk.api.annotation.param.display.Summary;
 import org.mule.sdk.api.connectivity.CachedConnectionProvider;
+import org.mule.sdk.api.connectivity.ConnectionValidationResult;
 
 import com.mulesoft.connectors.typesafe.internal.cache.DecisionCache;
 import com.mulesoft.connectors.typesafe.internal.engine.BudgetGuard;
@@ -173,5 +174,14 @@ public abstract class AbstractRouteConnectionProvider
   @Override
   public void disconnect(TypeSafeConnection connection) {
     // The HTTP client is owned by this provider and released in stop(); connections hold no sockets.
+  }
+
+  /**
+   * Test Connection: one minimal Noul call on the primary route so a rejected API key fails. List Models is not used
+   * (OpenRouter's catalog is public). A valid key spends one small decision.
+   */
+  @Override
+  public ConnectionValidationResult validate(TypeSafeConnection connection) {
+    return ConnectionProbe.validatePrimary(connection.primary());
   }
 }

@@ -7,7 +7,6 @@ import org.mule.sdk.api.annotation.param.display.DisplayName;
 import org.mule.sdk.api.annotation.param.display.Placement;
 import org.mule.sdk.api.annotation.param.display.Summary;
 import org.mule.sdk.api.annotation.semantics.security.Password;
-import org.mule.sdk.api.connectivity.ConnectionValidationResult;
 
 import com.mulesoft.connectors.typesafe.internal.provider.Capabilities;
 import com.mulesoft.connectors.typesafe.internal.provider.CostExtractor;
@@ -77,10 +76,5 @@ public class OpenRouterConnectionProvider extends AbstractRouteConnectionProvide
     SystemOneAdapter adapter = new SystemOneAdapter("openrouter", baseUrl, apiVersion, model, Capabilities.full(true),
         apiKey, headers, CostExtractor.OPENROUTER, RequestIdExtractor.OPENROUTER, transport());
     return connection(adapter);
-  }
-
-  @Override
-  public ConnectionValidationResult validate(TypeSafeConnection connection) {
-    return ConnectionValidationResult.success();
   }
 }

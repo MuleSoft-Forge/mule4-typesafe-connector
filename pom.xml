@@ -12,7 +12,7 @@
 
   <groupId>com.mulesoftforge</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
-  <version>1.0.1-SNAPSHOT1</version>
+  <version>1.0.1-SNAPSHOT2</version>
   <packaging>mule-extension</packaging>
   <name>TypeSafe Connector - Mule 4</name>
   <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes.</description>
