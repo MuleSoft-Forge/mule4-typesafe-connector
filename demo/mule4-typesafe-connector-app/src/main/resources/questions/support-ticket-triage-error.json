@@ -1,0 +1,27 @@
+{
+  "id": "support-ticket-triage-error",
+  "version": "1.0.0",
+  "description": "Deliberately broken harness fixture for Validate Question Set — expect errors and warnings.",
+  "questions": {
+    "broken": {
+      "type": "banana",
+      "options": {
+        "a": "Not under criteria"
+      }
+    },
+    "team": {
+      "type": "choice",
+      "instructions": "Which team should own this ticket?",
+      "criteria": {
+        "billing": "Payments",
+        "technical": "",
+        "other": "Payments"
+      }
+    },
+    "sentiment": {
+      "type": "score",
+      "instructions": "How positive is the customer's tone?",
+      "criteria": ["Negative", "Positive"]
+    }
+  }
+}

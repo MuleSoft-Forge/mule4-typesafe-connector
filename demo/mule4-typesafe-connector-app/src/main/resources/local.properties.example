@@ -1,0 +1,6 @@
+# Copy to local.properties (gitignored) and fill in.
+# Website Set Up uses ${typesafe.apiKey} and optional OpenRouter placeholders.
+typesafe.apiKey=replace-at-deploy-time
+openrouter.apiKey=replace-at-deploy-time
+app.url=https://localhost
+app.name=mule4-typesafe-connector-app
