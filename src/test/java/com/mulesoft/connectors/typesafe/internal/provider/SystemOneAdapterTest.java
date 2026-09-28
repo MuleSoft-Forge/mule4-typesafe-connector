@@ -136,6 +136,14 @@ class SystemOneAdapterTest {
   }
 
   @Test
+  void connectionTestTargetUsesConfiguredVersionAndDefaultModelEndpoint() {
+    SystemOneAdapter adapter = new SystemOneAdapter("typesafe", "https://api.typesafe.ai/", "/v2/", "jev-latest",
+        Capabilities.full(true), "key", Map.of(), CostExtractor.NONE, RequestIdExtractor.NONE, transport);
+
+    assertEquals("POST https://api.typesafe.ai/v2/systemone", adapter.connectionTestTarget());
+  }
+
+  @Test
   void evaluatesFromConfiguredApiVersion() {
     String body = "{\"answers\":{\"q\":{\"type\":\"noul\",\"noul\":0.9}}}";
     when(transport.send(any(HttpConstants.Method.class), eq("https://api.typesafe.ai/v2/systemone"), anyMap(), any()))

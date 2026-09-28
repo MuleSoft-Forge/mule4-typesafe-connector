@@ -58,6 +58,7 @@ class ConnectionProbeTest {
     assertTrue(result.getMessage().contains("UNAUTHORIZED"));
     assertTrue(result.getMessage().contains("401"));
     assertTrue(result.getMessage().contains("User not found."));
+    assertTrue(result.getMessage().contains("POST https://api.example.test/v1/systemone"));
     assertTrue(result.getException() instanceof ModuleException);
     assertEquals(TypeSafeErrorType.UNAUTHORIZED, ((ModuleException) result.getException()).getType());
   }
@@ -73,6 +74,11 @@ class ConnectionProbeTest {
     @Override
     public String routeName() {
       return "stub";
+    }
+
+    @Override
+    public String connectionTestTarget() {
+      return "POST https://api.example.test/v1/systemone";
     }
 
     @Override

@@ -70,6 +70,11 @@ public class SystemOneAdapter implements ProviderAdapter {
   }
 
   @Override
+  public String connectionTestTarget() {
+    return "POST " + endpoint(defaultModel);
+  }
+
+  @Override
   public Capabilities capabilities() {
     return capabilities;
   }

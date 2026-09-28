@@ -16,7 +16,8 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   defaults plus a capped preferred sample; runtime `list-models` still returns the full catalog.
 - **Test Connection validates the API key ([#14](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/14)).**
   Keyed routes run one minimal Noul `systemOne` call instead of always returning success. A rejected key fails with
-  `UNAUTHORIZED (HTTP <status>): …`. Mock stays local with no network call.
+  `UNAUTHORIZED (HTTP <status>): …`. Successful validation logs the credential-free HTTP method and URL; failures show
+  the same target in Studio. Mock stays local with no network call.
 - **Studio `Couldn't serialize MetadataKey` / `MuleMetadataKeyAdapter` after Test Connection.** Evaluate's question-set
   parameter no longer uses a `TypeKeysResolver` (SDK keys wrap as `MuleMetadataKeyAdapter`, which Studio's Gson adapter
   cannot serialize). It uses `@MetadataKeyId` + `@OfValues` instead; DataSense output typing is unchanged.

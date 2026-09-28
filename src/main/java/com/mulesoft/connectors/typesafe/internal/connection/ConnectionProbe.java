@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.CompletionException;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Minimal decision used by Test Connection. One Noul question on {@code POST /{apiVersion}/systemone} (or the
@@ -20,6 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * public and returns HTTP 200 without a valid key.
  */
 public final class ConnectionProbe {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionProbe.class);
 
   private ConnectionProbe() {
   }
@@ -38,28 +42,30 @@ public final class ConnectionProbe {
 
   /** Runs the ping on {@code primary} and maps success or typed provider failures for Studio Test Connection. */
   public static ConnectionValidationResult validatePrimary(ProviderAdapter primary) {
+    String target = primary.connectionTestTarget();
     try {
       primary.evaluate(pingRequest()).join();
+      LOGGER.info("Test Connection succeeded: {}", target);
       return ConnectionValidationResult.success();
     } catch (CompletionException e) {
-      return failure(e.getCause() != null ? e.getCause() : e);
+      return failure(target, e.getCause() != null ? e.getCause() : e);
     } catch (RuntimeException e) {
-      return failure(e);
+      return failure(target, e);
     }
   }
 
-  private static ConnectionValidationResult failure(Throwable cause) {
+  private static ConnectionValidationResult failure(String target, Throwable cause) {
     if (cause instanceof ProviderHttpException) {
       ProviderHttpException http = (ProviderHttpException) cause;
       ModuleException mapped = HttpErrorMapper.toException(http.status(), http.body());
-      return ConnectionValidationResult.failure(mapped.getMessage(), mapped);
+      return ConnectionValidationResult.failure(mapped.getMessage() + " - " + target, mapped);
     }
     if (cause instanceof ModuleException) {
       ModuleException mapped = (ModuleException) cause;
-      return ConnectionValidationResult.failure(mapped.getMessage(), mapped);
+      return ConnectionValidationResult.failure(mapped.getMessage() + " - " + target, mapped);
     }
     Exception exception = cause instanceof Exception ? (Exception) cause : new RuntimeException(cause);
     String message = exception.getMessage() != null ? exception.getMessage() : "Connection validation failed";
-    return ConnectionValidationResult.failure(message, exception);
+    return ConnectionValidationResult.failure(message + " - " + target, exception);
   }
 }
