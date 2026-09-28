@@ -24,18 +24,25 @@ class RequestIdExtractorTest {
 
   @Test
   void openRouterFallsBackToBodyIdWhenHeaderMissing() {
-    RawHttpResponse response = new RawHttpResponse(200, "{}", Map.of());
+    RawHttpResponse response = new RawHttpResponse(200, "{}", Map.of("cf-ray", "edge-fallback"));
     JsonNode body = Json.read("{\"id\":\"gen-from-body\"}");
 
     assertEquals("gen-from-body", RequestIdExtractor.OPENROUTER.extract(response, body));
   }
 
   @Test
-  void openRouterReturnsNullWhenNeitherHeaderNorBodyIdPresent() {
-    RawHttpResponse response = new RawHttpResponse(200, "{}", Map.of("x-request-id", "not-used"));
+  void openRouterFallsBackToCloudflareRayForNonGenerationEndpoints() {
+    RawHttpResponse response = new RawHttpResponse(200, "{}", Map.of("cf-ray", "a4222f2e1d545621-ARN"));
     JsonNode body = Json.read("{\"answers\":{}}");
 
-    assertNull(RequestIdExtractor.OPENROUTER.extract(response, body));
+    assertEquals("a4222f2e1d545621-ARN", RequestIdExtractor.OPENROUTER.extract(response, body));
+  }
+
+  @Test
+  void openRouterReturnsNullWhenNoCorrelationIdIsPresent() {
+    RawHttpResponse response = new RawHttpResponse(200, "{}", Map.of("x-request-id", "not-used"));
+
+    assertNull(RequestIdExtractor.OPENROUTER.extract(response, Json.read("{\"answers\":{}}")));
   }
 
   @Test

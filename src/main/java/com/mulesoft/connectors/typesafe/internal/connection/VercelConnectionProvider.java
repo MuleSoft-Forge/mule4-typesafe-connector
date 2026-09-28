@@ -7,7 +7,6 @@ import org.mule.sdk.api.annotation.param.display.DisplayName;
 import org.mule.sdk.api.annotation.param.display.Placement;
 import org.mule.sdk.api.annotation.param.display.Summary;
 import org.mule.sdk.api.annotation.semantics.security.Password;
-import org.mule.sdk.api.connectivity.ConnectionValidationResult;
 
 import com.mulesoft.connectors.typesafe.internal.provider.Capabilities;
 import com.mulesoft.connectors.typesafe.internal.provider.CostExtractor;
@@ -53,10 +52,5 @@ public class VercelConnectionProvider extends AbstractRouteConnectionProvider {
     SystemOneAdapter adapter = new SystemOneAdapter("vercel", baseUrl, apiVersion, model, Capabilities.full(true),
         apiKey, customHeaders(), CostExtractor.VERCEL, RequestIdExtractor.VERCEL_GENERATION_ID, transport());
     return connection(adapter);
-  }
-
-  @Override
-  public ConnectionValidationResult validate(TypeSafeConnection connection) {
-    return ConnectionValidationResult.success();
   }
 }

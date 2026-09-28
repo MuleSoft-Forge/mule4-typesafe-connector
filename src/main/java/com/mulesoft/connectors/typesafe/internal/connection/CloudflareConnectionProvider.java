@@ -7,7 +7,6 @@ import org.mule.sdk.api.annotation.param.display.DisplayName;
 import org.mule.sdk.api.annotation.param.display.Placement;
 import org.mule.sdk.api.annotation.param.display.Summary;
 import org.mule.sdk.api.annotation.semantics.security.Password;
-import org.mule.sdk.api.connectivity.ConnectionValidationResult;
 
 import com.mulesoft.connectors.typesafe.internal.provider.Capabilities;
 import com.mulesoft.connectors.typesafe.internal.provider.CloudflareAdapter;
@@ -54,11 +53,6 @@ public class CloudflareConnectionProvider extends AbstractRouteConnectionProvide
         model, Capabilities.full(false), apiToken, customHeaders(), CostExtractor.NONE, RequestIdExtractor.NONE,
         transport());
     return connection(adapter);
-  }
-
-  @Override
-  public ConnectionValidationResult validate(TypeSafeConnection connection) {
-    return ConnectionValidationResult.success();
   }
 
   /** Whether a Cloudflare API token is scoped to a user or a single account. */

@@ -5,6 +5,43 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-28
+
+### Added
+- **Anypoint Exchange publish path ([#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7)).**
+  Maven profile `exchange` deploys via Exchange Maven Facade v3 with `groupId` set to the Anypoint
+  organization id. POM `url` / description point at
+  [docs.mulesoftforge.com](https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/) as the
+  documentation source of truth. Maintainer steps: [`docs/exchange-publish.md`](docs/exchange-publish.md).
+  Verified by publishing live Central **`1.0.0`** (not SNAPSHOT) to a private org.
+
+### Fixed
+- **Governance sources fail to deploy (`IllegalModelDefinitionException` on `@Connection`).**
+  Studio website verification (Sources audit) could not start `on-budget-threshold`,
+  `on-drift-detected`, or `on-provider-failover`: each injected `@Connection TypeSafeConnection`,
+  but Mule sources must inject `ConnectionProvider` and call `connect()` / `disconnect()`
+  ([SDK](https://docs.mulesoft.com/mule-sdk/latest/sources-config-connection)). All three sources
+  now follow that contract ([PR #18](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/pull/18)).
+- **OpenRouter `list-models` empty catalog ([#13](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/13)).**
+  OpenRouter returns `{ data: [{ id, name, description, created }, ...] }`. The connector only read TypeSafe's
+  `{ models: [{ name, description, release_date }] }`, so HTTP 200 became an empty payload. OpenRouter cards are now
+  projected onto the TypeSafe contract (`name` ← `id`, `release_date` ← unix `created` as UTC ISO-8601, optional
+  `display_name` ← catalog `name` when it differs from `id`). The public OpenRouter endpoint contains its whole
+  458-model catalog, so its route adapter restricts results to OpenRouter's `typesafe/` vendor namespace. Catalog
+  scoping is a generic route-adapter hook so other broad gateway catalogs can define their own TypeSafe namespace
+  without changing the utility operation. OpenRouter model-list responses have no generation ID, so `requestId` falls
+  back to their per-request `cf-ray` trace. TypeSafe responses are unchanged.
+- **Studio metadata on OpenRouter config after live model list.** Design-time `ModelValueProvider` no longer dumps the
+  full OpenRouter catalog into the model dropdown (hundreds of ids broke Studio metadata serialization). It keeps static
+  defaults plus a capped preferred sample; runtime `list-models` still returns the full catalog.
+- **Test Connection validates the API key ([#14](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/14)).**
+  Keyed routes run one minimal Noul `systemOne` call instead of always returning success. A rejected key fails with
+  `UNAUTHORIZED (HTTP <status>): …`. Successful validation logs the credential-free HTTP method and URL; failures show
+  the same target in Studio. Mock stays local with no network call.
+- **Studio `Couldn't serialize MetadataKey` / `MuleMetadataKeyAdapter` after Test Connection.** Evaluate's question-set
+  parameter no longer uses a `TypeKeysResolver` (SDK keys wrap as `MuleMetadataKeyAdapter`, which Studio's Gson adapter
+  cannot serialize). It uses `@MetadataKeyId` + `@OfValues` instead; DataSense output typing is unchanged.
+
 ## [1.0.0] - 2026-09-27
 
 ### Changed

@@ -136,6 +136,14 @@ class SystemOneAdapterTest {
   }
 
   @Test
+  void connectionTestTargetUsesConfiguredVersionAndDefaultModelEndpoint() {
+    SystemOneAdapter adapter = new SystemOneAdapter("typesafe", "https://api.typesafe.ai/", "/v2/", "jev-latest",
+        Capabilities.full(true), "key", Map.of(), CostExtractor.NONE, RequestIdExtractor.NONE, transport);
+
+    assertEquals("POST https://api.typesafe.ai/v2/systemone", adapter.connectionTestTarget());
+  }
+
+  @Test
   void evaluatesFromConfiguredApiVersion() {
     String body = "{\"answers\":{\"q\":{\"type\":\"noul\",\"noul\":0.9}}}";
     when(transport.send(any(HttpConstants.Method.class), eq("https://api.typesafe.ai/v2/systemone"), anyMap(), any()))
@@ -155,5 +163,71 @@ class SystemOneAdapterTest {
     CompletionException thrown = assertThrows(CompletionException.class, () -> adapter.listModels().join());
     ModuleException cause = assertInstanceOf(ModuleException.class, thrown.getCause());
     assertEquals(TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER, cause.getType());
+  }
+
+  @Test
+  void listsOnlyTypeSafeOpenRouterModelsOntoCanonicalContract() {
+    String body = "{\"data\":[{" + "\"id\":\"openai/gpt-4\"," + "\"name\":\"OpenAI: GPT-4\","
+        + "\"description\":\"Not a TypeSafe model\"," + "\"created\":1725989880" + "},{"
+        + "\"id\":\"typesafe/jev-router\"," + "\"name\":\"TypeSafe: Jev Router\","
+        + "\"description\":\"Jev through OpenRouter\"," + "\"created\":1725989881" + "},{"
+        + "\"id\":\"anthropic/claude-3\"," + "\"name\":\"Anthropic: Claude 3\","
+        + "\"description\":\"Not a TypeSafe model\"," + "\"created\":1725989882"
+        + "}],\"total_count\":3,\"links\":{\"next\":null}}";
+    when(transport.send(any(HttpConstants.Method.class), eq("https://openrouter.ai/api/v1/models"), anyMap(), any()))
+        .thenReturn(CompletableFuture
+            .completedFuture(new RawHttpResponse(200, body, Map.of("cf-ray", "a4222f2e1d545621-ARN"))));
+
+    SystemOneAdapter adapter = new OpenRouterAdapter("openrouter", "https://openrouter.ai/api/", "v1",
+        "~typesafe/jev-latest", Capabilities.full(true), "key", Map.of(), CostExtractor.OPENROUTER,
+        RequestIdExtractor.OPENROUTER, transport);
+
+    ModelListPage page = adapter.listModels().join();
+
+    assertEquals(200, page.statusCode());
+    assertEquals("a4222f2e1d545621-ARN", page.requestId());
+    assertEquals(1, page.models().size());
+    assertEquals("typesafe/jev-router", page.models().get(0).name());
+    assertEquals("Jev through OpenRouter", page.models().get(0).description());
+    assertEquals("2024-09-10T17:38:01Z", page.models().get(0).releaseDate());
+    assertEquals("TypeSafe: Jev Router", page.models().get(0).displayName());
+  }
+
+  @Test
+  void compatibleDataArrayIsNotRestrictedToOpenRouterVendorScope() {
+    String body = "{\"data\":[{\"id\":\"vendor/model-a\",\"name\":\"Model A\",\"created\":1725989881},"
+        + "{\"id\":\"vendor/model-b\",\"name\":\"Model B\",\"created\":1725989882}]}";
+    when(transport.send(any(HttpConstants.Method.class), eq("https://gateway.example/v1/models"), anyMap(), any()))
+        .thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, body, Map.of())));
+
+    SystemOneAdapter adapter = new SystemOneAdapter("compatible", "https://gateway.example", "v1", "vendor/model-a",
+        Capabilities.full(true), "key", Map.of(), CostExtractor.NONE, RequestIdExtractor.NONE, transport);
+
+    assertEquals(List.of("vendor/model-a", "vendor/model-b"),
+        adapter.listModels().join().models().stream().map(ModelCard::name).toList());
+  }
+
+  @Test
+  void listsModelsEmptyWhenBodyHasNeitherModelsNorData() {
+    when(transport.send(any(HttpConstants.Method.class), eq("https://api.typesafe.ai/v1/models"), anyMap(), any()))
+        .thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, "{\"ok\":true}", Map.of())));
+
+    ModelListPage page = adapter(CostExtractor.NONE).listModels().join();
+
+    assertEquals(200, page.statusCode());
+    assertEquals(List.of(), page.models());
+  }
+
+  @Test
+  void typesafeListModelsDoesNotSetDisplayName() {
+    String body = "{\"models\":[{\"name\":\"jev-latest\",\"description\":\"Latest\","
+        + "\"release_date\":\"2026-09-10T18:38:01.391457+00:00\"}]}";
+    when(transport.send(any(HttpConstants.Method.class), eq("https://api.typesafe.ai/v1/models"), anyMap(), any()))
+        .thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, body, Map.of())));
+
+    ModelCard card = adapter(CostExtractor.NONE).listModels().join().models().get(0);
+
+    assertEquals("jev-latest", card.name());
+    assertNull(card.displayName());
   }
 }
