@@ -22,7 +22,7 @@ Jev is not a chat model. It takes a `state` plus named typed questions (Noul = y
 | --- | --- |
 | Extension name | `TypeSafe` (display: "TypeSafe Connector") |
 | XML prefix / namespace | `typesafe` / `http://www.mulesoft.org/schema/mule/typesafe` |
-| Maven coordinates | `com.mulesoft.connectors:mule4-typesafe-connector` |
+| Maven coordinates | `com.mulesoftforge:mule4-typesafe-connector` |
 | Java package root | `com.mulesoft.connectors.typesafe` with `api` (public types) and `internal` (everything else) |
 | Category | `Category.SELECT` (same as both references) |
 | License | Apache-2.0 (same as Inference Connector) |
@@ -528,7 +528,11 @@ Six milestones to v1.0.0; each is a mergeable PR that leaves `mvn clean verify` 
 | M2 | All routes | `openrouter`, `cloudflare`, `vercel` adapters, `Capabilities`, failover, `list-models`, `get-capabilities`, value providers | Contract tests green for 5 routes; failover MUnit green; section 3 *verify* items resolved and recorded |
 | M3 | Decide + chain | `ask-noul`, `choose`, `score`, `select-candidate`, `apply-policy`, `validate-question-set`, question-set files, DataSense output resolver, `traceEntry` | Section 8.8 flow runs end-to-end in MUnit against `mock`; DataSense autocompletes `payload.answers.team.choice` from a question-set file |
 | M4 | Scale + governance | `evaluate-batch`, `filter`, cache, `BudgetGuard`, stats recorder, three sources | 1,000-item batch completes with `maxConcurrency=8` against WireMock; budget stops at limit; each source fires once per breach and re-arms |
-| M5 | Release | Demo app, full README, Javadoc pass, live tests on available routes, Central + Exchange profiles | Demo runs on `mock` with no keys; live smoke passes on at least TypeSafe or OpenRouter; built jar's `mule-artifact.json` shows Java 17 and min Mule 4.9.0 |
+| M5 | Release | Demo app, full README, Javadoc pass, live tests on available routes, Maven Central profile and publication | Demo runs on `mock` with no keys; live smoke passes on at least TypeSafe or OpenRouter; built jar's `mule-artifact.json` shows Java 17 and min Mule 4.9.0; `1.0.0` resolves from Maven Central |
+
+**M5 closeout (2026-09-28):** `1.0.0` is released on GitHub and Maven Central.
+Anypoint Exchange publication was removed from the `1.0.0` boundary and is tracked
+explicitly in [#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7).
 
 **Global acceptance criteria for v1.0.0**
 
@@ -556,7 +560,7 @@ Six of the ten questions are resolved from primary sources on 2026-09-25 and fol
 | Q7 | Permission to use "TypeSafe" in the name | Owner | Named after the vendor API (like OpenAI, not ChatGPT); Jev stays the default model. Confirm with TypeSafe before Exchange |
 | Q8 | Value provider reading app question-set files at design time | Spike, M3 | Test in Studio and ACB; else free-text parameter |
 | Q9 | `min.mule.version` 4.9.0 with the sdk-api HTTP client | Spike, M0 | Build and inspect computed minimum; else legacy HTTP API |
-| Q10 | Maven groupId and publishing org | Resolved | `com.mulesoft.connectors:mule4-typesafe-connector` (owner decision) |
+| Q10 | Maven groupId and publishing org | Resolved | `com.mulesoftforge:mule4-typesafe-connector` (Forge Central namespace, same as mule-infa-mdm-connector) |
 
 ## Sources
 

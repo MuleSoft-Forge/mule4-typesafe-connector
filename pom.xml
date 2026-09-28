@@ -10,12 +10,18 @@
     <version>1.12.3</version>
   </parent>
 
-  <groupId>com.mulesoft.connectors</groupId>
+  <groupId>com.mulesoftforge</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
   <version>1.0.0</version>
   <packaging>mule-extension</packaging>
   <name>TypeSafe Connector - Mule 4</name>
   <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes.</description>
+  <url>https://github.com/MuleSoft-Forge/mule4-typesafe-connector</url>
+
+  <organization>
+    <name>MuleSoft-Forge</name>
+    <url>https://mulesoftforge.com/</url>
+  </organization>
 
   <licenses>
     <license>
@@ -24,6 +30,21 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+
+  <developers>
+    <developer>
+      <name>George Jeffcock</name>
+      <email>gjeffcock@mulesoft.com</email>
+      <organization>Salesforce</organization>
+      <organizationUrl>https://www.mulesoft.com</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/MuleSoft-Forge/mule4-typesafe-connector.git</connection>
+    <developerConnection>scm:git:ssh://github.com:MuleSoft-Forge/mule4-typesafe-connector.git</developerConnection>
+    <url>https://github.com/MuleSoft-Forge/mule4-typesafe-connector</url>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -217,6 +238,108 @@
       </plugin>
     </plugins>
   </build>
+
+  <!-- Maven Central publish, matching mule-infa-mdm-connector.
+       Activate with: mvn clean deploy -Pcentral
+       Requires ~/.m2/settings.xml server id maven-central-mulesoftforge
+       and env MAVEN_GPG_KEYNAME / MAVEN_GPG_PASSPHRASE. -->
+  <profiles>
+    <profile>
+      <id>central</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.11.2</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>net.nicoulaj.maven.plugins</groupId>
+            <artifactId>checksum-maven-plugin</artifactId>
+            <version>1.11</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>files</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}</directory>
+                  <includes>*.jar</includes>
+                </fileSet>
+              </fileSets>
+              <algorithms>
+                <algorithm>MD5</algorithm>
+                <algorithm>SHA-1</algorithm>
+                <algorithm>SHA-256</algorithm>
+              </algorithms>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.7</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <useAgent>true</useAgent>
+                  <keyname>${env.MAVEN_GPG_KEYNAME}</keyname>
+                  <passphrase>${env.MAVEN_GPG_PASSPHRASE}</passphrase>
+                  <gpgArguments>
+                    <arg>--batch</arg>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.11.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>maven-central-mulesoftforge</publishingServerId>
+              <autoPublish>false</autoPublish>
+              <deploymentName>TypeSafe Connector Mule 4 ${project.version}</deploymentName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <repositories>
     <repository>
