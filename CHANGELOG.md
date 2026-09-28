@@ -5,6 +5,14 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+### Added
+- **Anypoint Exchange publish path ([#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7)).**
+  Maven profile `exchange` deploys via Exchange Maven Facade v3 with `groupId` set to the Anypoint
+  organization id. POM `url` / description point at
+  [docs.mulesoftforge.com](https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/) as the
+  documentation source of truth. Maintainer steps: [`docs/exchange-publish.md`](docs/exchange-publish.md).
+  Verified by publishing live Central **`1.0.0`** (not SNAPSHOT) to a private org.
+
 ### Fixed
 - **OpenRouter `list-models` empty catalog ([#13](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/13)).**
   OpenRouter returns `{ data: [{ id, name, description, created }, ...] }`. The connector only read TypeSafe's

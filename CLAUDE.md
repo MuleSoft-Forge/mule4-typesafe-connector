@@ -35,8 +35,10 @@ Choice / Score) it returns one typed **answer** per question.
 
 Milestones **M0–M5** are complete, merged to `main`, and released as `1.0.0`
 on GitHub and Maven Central (`com.mulesoftforge:mule4-typesafe-connector:1.0.0`).
-Anypoint Exchange publication is explicitly deferred to
+Anypoint Exchange publication uses Maven profile `exchange` (see
+[`docs/exchange-publish.md`](docs/exchange-publish.md)); tracked in
 [#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7).
+Docs source of truth is `https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/`.
 Development now targets `1.0.1-SNAPSHOT` under
 [M6](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/milestone/2):
 adoption and release hardening only, with no planned new operations or public

@@ -10,13 +10,15 @@
     <version>1.12.3</version>
   </parent>
 
-  <groupId>com.mulesoftforge</groupId>
+  <!-- Default Central/Forge coordinates. Profile `exchange` overrides connector.groupId to the
+       Anypoint org id (required by Exchange Maven Facade). -->
+  <groupId>${connector.groupId}</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
   <version>1.0.1-SNAPSHOT6</version>
   <packaging>mule-extension</packaging>
   <name>TypeSafe Connector - Mule 4</name>
-  <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes.</description>
-  <url>https://github.com/MuleSoft-Forge/mule4-typesafe-connector</url>
+  <description>Mule 4 connector for the TypeSafe System One API (Jev and later System One models) across interchangeable routes. Documentation: https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/</description>
+  <url>${connector.docs.url}</url>
 
   <organization>
     <name>MuleSoft-Forge</name>
@@ -47,6 +49,8 @@
   </scm>
 
   <properties>
+    <connector.groupId>com.mulesoftforge</connector.groupId>
+    <connector.docs.url>https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/</connector.docs.url>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>17</maven.compiler.release>
     <min.mule.version>4.9.0</min.mule.version>
@@ -335,6 +339,80 @@
               <autoPublish>false</autoPublish>
               <deploymentName>TypeSafe Connector Mule 4 ${project.version}</deploymentName>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Anypoint Exchange (private org). Activate with: mvn clean deploy -Pexchange
+         Requires ANYPOINT_ORG_ID and ~/.m2/settings.xml server id anypoint-exchange-v3.
+         See docs/exchange-publish.md. Does not alter the Central `central` profile.
+         exchange-pre-deploy is required by Facade v3; without it deploy returns HTTP 412. -->
+    <profile>
+      <id>exchange</id>
+      <properties>
+        <connector.groupId>${env.ANYPOINT_ORG_ID}</connector.groupId>
+      </properties>
+      <distributionManagement>
+        <repository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+          <layout>default</layout>
+        </repository>
+      </distributionManagement>
+      <!-- Facade must be a resolve repository too: exchange-pre-deploy reads
+           publication state from it (missing → "Artifact could not be found"). -->
+      <repositories>
+        <repository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>exchange-mule-maven-plugin</artifactId>
+            <version>0.1.7</version>
+            <executions>
+              <execution>
+                <id>exchange-pre-deploy</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>exchange-pre-deploy</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>exchange-deploy</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>exchange-deploy</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
