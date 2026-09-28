@@ -122,6 +122,12 @@ threshold.
 Published to Maven Central under the Forge namespace
 [`com.mulesoftforge`](https://central.sonatype.com/search?q=g:com.mulesoftforge).
 
+Product docs (source of truth):
+[docs.mulesoftforge.com/connectors/mule4-typesafe-connector](https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/).
+
+Private Anypoint Exchange publication (Studio/ACB install) uses Maven profile `exchange` and
+rewrites `groupId` to the Anypoint organization id. See [`docs/exchange-publish.md`](docs/exchange-publish.md).
+
 ## Quick start
 
 ```xml
