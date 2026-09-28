@@ -166,15 +166,18 @@ class SystemOneAdapterTest {
   }
 
   @Test
-  void listsOpenRouterDataArrayOntoTypeSafeContract() {
-    String body = "{\"data\":[{" + "\"id\":\"typesafe/jev-router\"," + "\"name\":\"TypeSafe: Jev Router\","
-        + "\"description\":\"Jev through OpenRouter\"," + "\"created\":1725989881" + "},{" + "\"id\":\"same-as-label\","
-        + "\"name\":\"same-as-label\"," + "\"description\":\"No separate display label\"," + "\"created\":1725989882"
-        + "}],\"total_count\":2,\"links\":{\"next\":null}}";
+  void listsOnlyTypeSafeOpenRouterModelsOntoCanonicalContract() {
+    String body = "{\"data\":[{" + "\"id\":\"openai/gpt-4\"," + "\"name\":\"OpenAI: GPT-4\","
+        + "\"description\":\"Not a TypeSafe model\"," + "\"created\":1725989880" + "},{"
+        + "\"id\":\"typesafe/jev-router\"," + "\"name\":\"TypeSafe: Jev Router\","
+        + "\"description\":\"Jev through OpenRouter\"," + "\"created\":1725989881" + "},{"
+        + "\"id\":\"anthropic/claude-3\"," + "\"name\":\"Anthropic: Claude 3\","
+        + "\"description\":\"Not a TypeSafe model\"," + "\"created\":1725989882"
+        + "}],\"total_count\":3,\"links\":{\"next\":null}}";
     when(transport.send(any(HttpConstants.Method.class), eq("https://openrouter.ai/api/v1/models"), anyMap(), any()))
         .thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, body, Map.of())));
 
-    SystemOneAdapter adapter = new SystemOneAdapter("openrouter", "https://openrouter.ai/api/", "v1",
+    SystemOneAdapter adapter = new OpenRouterAdapter("openrouter", "https://openrouter.ai/api/", "v1",
         "~typesafe/jev-latest", Capabilities.full(true), "key", Map.of(), CostExtractor.OPENROUTER,
         RequestIdExtractor.OPENROUTER, transport);
 
@@ -182,13 +185,25 @@ class SystemOneAdapterTest {
 
     assertEquals(200, page.statusCode());
     assertNull(page.requestId());
-    assertEquals(2, page.models().size());
+    assertEquals(1, page.models().size());
     assertEquals("typesafe/jev-router", page.models().get(0).name());
     assertEquals("Jev through OpenRouter", page.models().get(0).description());
     assertEquals("2024-09-10T17:38:01Z", page.models().get(0).releaseDate());
     assertEquals("TypeSafe: Jev Router", page.models().get(0).displayName());
-    assertEquals("same-as-label", page.models().get(1).name());
-    assertNull(page.models().get(1).displayName());
+  }
+
+  @Test
+  void compatibleDataArrayIsNotRestrictedToOpenRouterVendorScope() {
+    String body = "{\"data\":[{\"id\":\"vendor/model-a\",\"name\":\"Model A\",\"created\":1725989881},"
+        + "{\"id\":\"vendor/model-b\",\"name\":\"Model B\",\"created\":1725989882}]}";
+    when(transport.send(any(HttpConstants.Method.class), eq("https://gateway.example/v1/models"), anyMap(), any()))
+        .thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, body, Map.of())));
+
+    SystemOneAdapter adapter = new SystemOneAdapter("compatible", "https://gateway.example", "v1", "vendor/model-a",
+        Capabilities.full(true), "key", Map.of(), CostExtractor.NONE, RequestIdExtractor.NONE, transport);
+
+    assertEquals(List.of("vendor/model-a", "vendor/model-b"),
+        adapter.listModels().join().models().stream().map(ModelCard::name).toList());
   }
 
   @Test

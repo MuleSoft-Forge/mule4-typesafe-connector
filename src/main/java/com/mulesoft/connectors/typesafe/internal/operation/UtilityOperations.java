@@ -120,7 +120,8 @@ public class UtilityOperations {
 
   /**
    * Lists the models available on the connected routes, primary route first. The payload is a JSON array. Each entry
-   * has name, description, and release_date from <code>GET /{apiVersion}/models</code>, plus route. OpenRouter catalog
+   * has name, description, and release_date from <code>GET /{apiVersion}/models</code>, plus route. Each route adapter
+   * normalizes its provider's response and scopes broad provider catalogs to that route's TypeSafe model namespace;
    * labels that differ from the callable id appear as display_name. Routes that cannot enumerate models are skipped. If
    * none can, the operation raises TYPESAFE:UNSUPPORTED_BY_PROVIDER.
    * <p>

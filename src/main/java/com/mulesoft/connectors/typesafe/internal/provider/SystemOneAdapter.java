@@ -132,6 +132,14 @@ public class SystemOneAdapter implements ProviderAdapter {
     return baseUrl + "/" + apiVersion + "/systemone";
   }
 
+  /**
+   * Route hook for provider-wide catalogs. The canonical TypeSafe and compatible routes accept every listed model;
+   * adapters for broad multi-vendor gateways can restrict entries to their TypeSafe vendor namespace.
+   */
+  protected boolean includeListedModel(String id) {
+    return true;
+  }
+
   /** Builds the request body. Overridden by the Cloudflare adapter, which nests under {@code input}. */
   protected String buildBody(DecisionRequest request, String model) {
     ObjectNode node = Json.object();
@@ -161,10 +169,11 @@ public class SystemOneAdapter implements ProviderAdapter {
   /**
    * Projects a models response onto the TypeSafe model-list contract. TypeSafe bodies use a {@code models} array with
    * {@code name} / {@code description} / {@code release_date}. OpenRouter bodies use a {@code data} array whose
-   * callable id is {@code id}; the catalog label {@code name} becomes {@code display_name} when it differs from
-   * {@code id}, and unix {@code created} becomes UTC ISO-8601 {@code release_date}.
+   * callable id is {@code id}. Provider adapters may filter broad catalogs through {@link #includeListedModel(String)}.
+   * The catalog label {@code name} becomes {@code display_name} when it differs from {@code id}, and unix
+   * {@code created} becomes UTC ISO-8601 {@code release_date}.
    */
-  private static List<ModelCard> parseModelCards(JsonNode unwrapped) {
+  private List<ModelCard> parseModelCards(JsonNode unwrapped) {
     List<ModelCard> cards = new ArrayList<>();
     JsonNode models = unwrapped.path("models");
     if (models.isArray()) {
@@ -188,6 +197,9 @@ public class SystemOneAdapter implements ProviderAdapter {
         }
         String id = textOrNull(model.get("id"));
         if (id == null) {
+          continue;
+        }
+        if (!includeListedModel(id)) {
           continue;
         }
         String catalogName = textOrNull(model.get("name"));

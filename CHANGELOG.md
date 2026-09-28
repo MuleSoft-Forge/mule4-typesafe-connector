@@ -10,7 +10,10 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   OpenRouter returns `{ data: [{ id, name, description, created }, ...] }`. The connector only read TypeSafe's
   `{ models: [{ name, description, release_date }] }`, so HTTP 200 became an empty payload. OpenRouter cards are now
   projected onto the TypeSafe contract (`name` ← `id`, `release_date` ← unix `created` as UTC ISO-8601, optional
-  `display_name` ← catalog `name` when it differs from `id`). TypeSafe responses are unchanged.
+  `display_name` ← catalog `name` when it differs from `id`). The public OpenRouter endpoint contains its whole
+  458-model catalog, so its route adapter restricts results to OpenRouter's `typesafe/` vendor namespace. Catalog
+  scoping is a generic route-adapter hook so other broad gateway catalogs can define their own TypeSafe namespace
+  without changing the utility operation. TypeSafe responses are unchanged.
 - **Studio metadata on OpenRouter config after live model list.** Design-time `ModelValueProvider` no longer dumps the
   full OpenRouter catalog into the model dropdown (hundreds of ids broke Studio metadata serialization). It keeps static
   defaults plus a capped preferred sample; runtime `list-models` still returns the full catalog.

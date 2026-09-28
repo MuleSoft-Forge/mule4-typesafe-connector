@@ -10,8 +10,8 @@ import org.mule.sdk.api.annotation.semantics.security.Password;
 
 import com.mulesoft.connectors.typesafe.internal.provider.Capabilities;
 import com.mulesoft.connectors.typesafe.internal.provider.CostExtractor;
+import com.mulesoft.connectors.typesafe.internal.provider.OpenRouterAdapter;
 import com.mulesoft.connectors.typesafe.internal.provider.RequestIdExtractor;
-import com.mulesoft.connectors.typesafe.internal.provider.SystemOneAdapter;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -73,7 +73,7 @@ public class OpenRouterConnectionProvider extends AbstractRouteConnectionProvide
     if (appTitle != null && !appTitle.isBlank()) {
       headers.put("X-Title", appTitle);
     }
-    SystemOneAdapter adapter = new SystemOneAdapter("openrouter", baseUrl, apiVersion, model, Capabilities.full(true),
+    OpenRouterAdapter adapter = new OpenRouterAdapter("openrouter", baseUrl, apiVersion, model, Capabilities.full(true),
         apiKey, headers, CostExtractor.OPENROUTER, RequestIdExtractor.OPENROUTER, transport());
     return connection(adapter);
   }
