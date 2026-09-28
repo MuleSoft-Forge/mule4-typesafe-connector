@@ -12,6 +12,7 @@ import org.mule.sdk.api.annotation.param.MediaType;
 import org.mule.sdk.api.annotation.param.Optional;
 import org.mule.sdk.api.annotation.param.ParameterGroup;
 import org.mule.sdk.api.annotation.param.display.DisplayName;
+import org.mule.sdk.api.annotation.values.OfValues;
 import org.mule.sdk.api.exception.ModuleException;
 import org.mule.sdk.api.runtime.operation.Result;
 import org.mule.sdk.api.runtime.process.CompletionCallback;
@@ -33,11 +34,11 @@ import com.mulesoft.connectors.typesafe.internal.metadata.DecisionOutputResolver
 import com.mulesoft.connectors.typesafe.internal.metadata.JsonInputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.NoulAnswerOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.NullInputAttributesResolver;
-import com.mulesoft.connectors.typesafe.internal.metadata.QuestionSetTypeKeysResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.QuestionsInputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.ScoreAnswerOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.stats.DecisionStatsRecorder;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
+import com.mulesoft.connectors.typesafe.internal.value.QuestionSetValueProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -87,7 +88,7 @@ public class DecisionOperations {
   public void evaluate(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
       @Content @TypeResolver(JsonInputResolver.class) InputStream state,
       @Optional @Content(primary = false) @TypeResolver(QuestionsInputResolver.class) @DisplayName("Questions") InputStream questions,
-      @Optional @DisplayName("Question set") @MetadataKeyId(QuestionSetTypeKeysResolver.class) String questionSet,
+      @Optional @DisplayName("Question set") @MetadataKeyId @OfValues(QuestionSetValueProvider.class) String questionSet,
       @Optional String questionSetId, @Optional String questionSetVersion,
       @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,

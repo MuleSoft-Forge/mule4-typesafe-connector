@@ -11,8 +11,8 @@ import com.mulesoft.connectors.typesafe.internal.questionset.QuestionSetLoader;
 /**
  * Resolves the DataSense output type of {@code evaluate} from the selected question-set file. With a key, the answer
  * fields are typed per question so {@code payload.answers.<id>} autocompletes; without one (inline questions, or a file
- * that cannot be read at design time), it degrades to the generic open-answers shape. Shares its category with
- * {@link QuestionSetTypeKeysResolver} so the key and output pair up.
+ * that cannot be read at design time), it degrades to the generic open-answers shape. The parameter is a
+ * {@code @MetadataKeyId} (no TypeKeysResolver) so Studio does not serialize SDK MetadataKey adapters.
  */
 public class DecisionOutputResolver implements OutputTypeResolver<String> {
 
