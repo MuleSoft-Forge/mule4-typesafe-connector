@@ -37,6 +37,10 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   call on 2026-09-26; see [`docs/provider-contracts.md`](docs/provider-contracts.md).
 
 ### Added
+- **M5 release.** Published `com.mulesoftforge:mule4-typesafe-connector:1.0.0`
+  to Maven Central with signed source and Javadoc artifacts. Anypoint Exchange
+  publication is tracked separately in
+  [#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7).
 - **Guiding principle.** `CLAUDE.md` leads with **Think: Smart if-statements** — Jev returns a
   value; the flow owns the `if`.
 - **M4 — Scale & governance.** The `evaluate-batch` and `filter` scale operations, fanned out

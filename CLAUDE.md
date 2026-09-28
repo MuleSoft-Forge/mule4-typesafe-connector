@@ -31,11 +31,12 @@ Choice / Score) it returns one typed **answer** per question.
 - Java 17 · Apache-2.0 · min Mule Runtime **4.9.0**
 - Repo: `github.com/MuleSoft-Forge/mule4-typesafe-connector`
 
-## Current status (2026-09-27)
+## Current status (2026-09-28)
 
-Milestones **M0–M4** are complete, merged to `develop` and `main`, and pushed.
-The GitHub `1.0.0` release completes the first M5 delivery; Maven Central and Exchange
-publication remain in progress.
+Milestones **M0–M5** are complete, merged to `main`, and released as `1.0.0`
+on GitHub and Maven Central (`com.mulesoftforge:mule4-typesafe-connector:1.0.0`).
+Anypoint Exchange publication is explicitly deferred to
+[#7](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/7).
 
 | Milestone | Scope | State |
 | --- | --- | --- |
@@ -44,7 +45,7 @@ publication remain in progress.
 | M2 | Five routes + ordered failover, `list-models` | ✅ |
 | M3 | decide/policy/utility ops, question sets, DataSense, MUnit suite | ✅ |
 | M4 | `evaluate-batch`, `filter`, cache, budget guard, stats, 3 sources | ✅ |
-| M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central + Exchange publish profiles | GitHub release complete; registries pending |
+| M5 | Release: keyless-mock demo variant, docs/Javadoc polish, live smoke tests, Maven Central publication | ✅ — Exchange follow-up tracked in #7 |
 
 ## Build & quality gates
 
