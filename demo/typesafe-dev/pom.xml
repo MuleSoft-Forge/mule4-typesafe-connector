@@ -32,7 +32,7 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>com.mulesoft.connectors</groupId>
+			<groupId>com.mulesoftforge</groupId>
 			<artifactId>mule4-typesafe-connector</artifactId>
 			<version>1.0.0</version>
 			<classifier>mule-plugin</classifier>

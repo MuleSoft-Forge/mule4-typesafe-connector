@@ -24,7 +24,7 @@ is the default model. Jev is a *decision* model
 (not a chat model): given a **state** plus named, typed **questions** (Noul /
 Choice / Score) it returns one typed **answer** per question.
 
-- Coordinates: `com.mulesoft.connectors:mule4-typesafe-connector:1.0.0`
+- Coordinates: `com.mulesoftforge:mule4-typesafe-connector:1.0.0`
 - Packaging: `mule-extension` · XML prefix `typesafe` · namespace
   `http://www.mulesoft.org/schema/mule/typesafe`
 - Parent: `org.mule.extensions:mule-java-extension-parent:1.12.3`
