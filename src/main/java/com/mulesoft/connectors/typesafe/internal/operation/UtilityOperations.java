@@ -120,8 +120,9 @@ public class UtilityOperations {
 
   /**
    * Lists the models available on the connected routes, primary route first. The payload is a JSON array. Each entry
-   * has name, description, and release_date from <code>GET /{apiVersion}/models</code>, plus route. Routes that cannot
-   * enumerate models are skipped. If none can, the operation raises TYPESAFE:UNSUPPORTED_BY_PROVIDER.
+   * has name, description, and release_date from <code>GET /{apiVersion}/models</code>, plus route. OpenRouter catalog
+   * labels that differ from the callable id appear as display_name. Routes that cannot enumerate models are skipped. If
+   * none can, the operation raises TYPESAFE:UNSUPPORTED_BY_PROVIDER.
    * <p>
    * This call sends no body and reads no incoming message attributes. Output attributes are count, and calls with
    * route, statusCode, and requestId.
@@ -175,6 +176,9 @@ public class UtilityOperations {
           putText(item, "description", card.description());
           putText(item, "release_date", card.releaseDate());
           putText(item, "route", routeModels.route());
+          if (card.displayName() != null) {
+            putText(item, "display_name", card.displayName());
+          }
         }
       }
       byte[] body = Json.write(models).getBytes(StandardCharsets.UTF_8);

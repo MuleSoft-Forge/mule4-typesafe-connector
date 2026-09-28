@@ -8,8 +8,8 @@ import org.mule.metadata.api.model.MetadataType;
 import org.mule.sdk.api.metadata.resolving.OutputStaticTypeResolver;
 
 /**
- * Static DataSense type for the List Models JSON payload: {@code name}, {@code description}, {@code release_date}, and
- * {@code route}.
+ * Static DataSense type for the List Models JSON payload: {@code name}, {@code description}, {@code release_date},
+ * {@code route}, and optional {@code display_name} (OpenRouter catalog label when it differs from the callable id).
  */
 public class ModelListOutputResolver extends OutputStaticTypeResolver {
 
@@ -21,6 +21,7 @@ public class ModelListOutputResolver extends OutputStaticTypeResolver {
     item.addField().key("description").value().stringType();
     item.addField().key("release_date").value().stringType();
     item.addField().key("route").value().stringType();
+    item.addField().key("display_name").value().stringType();
     return array.build();
   }
 }

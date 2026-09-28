@@ -149,6 +149,17 @@ public class SystemOneAdapter implements ProviderAdapter {
       throw new ModuleException("Model list body was not valid JSON", TypeSafeErrorType.INVALID_RESPONSE, e);
     }
     JsonNode unwrapped = unwrap(root);
+    List<ModelCard> cards = parseModelCards(unwrapped);
+    return new ModelListPage(cards, response.status(), requestIdExtractor.extract(response, unwrapped));
+  }
+
+  /**
+   * Projects a models response onto the TypeSafe model-list contract. TypeSafe bodies use a {@code models} array with
+   * {@code name} / {@code description} / {@code release_date}. OpenRouter bodies use a {@code data} array whose
+   * callable id is {@code id}; the catalog label {@code name} becomes {@code display_name} when it differs from
+   * {@code id}, and unix {@code created} becomes UTC ISO-8601 {@code release_date}.
+   */
+  private static List<ModelCard> parseModelCards(JsonNode unwrapped) {
     List<ModelCard> cards = new ArrayList<>();
     JsonNode models = unwrapped.path("models");
     if (models.isArray()) {
@@ -162,8 +173,33 @@ public class SystemOneAdapter implements ProviderAdapter {
         }
         cards.add(new ModelCard(name, textOrNull(model.get("description")), textOrNull(model.get("release_date"))));
       }
+      return cards;
     }
-    return new ModelListPage(cards, response.status(), requestIdExtractor.extract(response, unwrapped));
+    JsonNode data = unwrapped.path("data");
+    if (data.isArray()) {
+      for (JsonNode model : data) {
+        if (!model.isObject()) {
+          continue;
+        }
+        String id = textOrNull(model.get("id"));
+        if (id == null) {
+          continue;
+        }
+        String catalogName = textOrNull(model.get("name"));
+        String displayName = catalogName != null && !catalogName.equals(id) ? catalogName : null;
+        cards.add(new ModelCard(id, textOrNull(model.get("description")), releaseDateFromCreated(model.get("created")),
+            displayName));
+      }
+    }
+    return cards;
+  }
+
+  /** OpenRouter {@code created} is unix seconds; TypeSafe uses an ISO-8601 {@code release_date} string. */
+  private static String releaseDateFromCreated(JsonNode created) {
+    if (created == null || !created.isNumber()) {
+      return null;
+    }
+    return Instant.ofEpochSecond(created.asLong()).toString();
   }
 
   private static String textOrNull(JsonNode node) {

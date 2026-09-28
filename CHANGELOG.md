@@ -5,6 +5,13 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+- **OpenRouter `list-models` empty catalog ([#13](https://github.com/MuleSoft-Forge/mule4-typesafe-connector/issues/13)).**
+  OpenRouter returns `{ data: [{ id, name, description, created }, ...] }`. The connector only read TypeSafe's
+  `{ models: [{ name, description, release_date }] }`, so HTTP 200 became an empty payload. OpenRouter cards are now
+  projected onto the TypeSafe contract (`name` ← `id`, `release_date` ← unix `created` as UTC ISO-8601, optional
+  `display_name` ← catalog `name` when it differs from `id`). TypeSafe responses are unchanged.
+
 ## [1.0.0] - 2026-09-27
 
 ### Changed
