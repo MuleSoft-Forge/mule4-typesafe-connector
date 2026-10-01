@@ -160,4 +160,12 @@ class PolicyValidatorTest {
     assertTrue(
         mentions(check("{\"team\":{\"otherOptions\":\"ESCALATE\"}}").getErrors(), "otherOptions must be one of"));
   }
+
+  @Test
+  void routeQuestionMustNameAChoiceQuestion() {
+    assertTrue(mentions(check("{\"routeQuestion\":\"urgent\",\"urgent\":{\"yesAbove\":0.7}}").getErrors(),
+        "must name a choice question"));
+    assertTrue(mentions(check("{\"routeQuestion\":\"missing\",\"team\":{\"minProbability\":0.5}}").getErrors(),
+        "does not match a question id"));
+  }
 }

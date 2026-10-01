@@ -178,6 +178,20 @@ class PolicyEvaluatorTest {
     assertEquals("ACCEPT", action(noul(0.1), policy));
   }
 
+  @Test
+  void routeQuestionSelectsWhichChoiceSuppliesRouteKey() {
+    ObjectNode answers = Json.object();
+    answers.set("intent", Json.read(
+        "{\"type\":\"choice\",\"choice\":\"support\",\"probabilities\":{\"support\":0.9},\"derived\":{\"margin\":0.8,\"isNoMatch\":false}}"));
+    answers.set("team", Json.read(
+        "{\"type\":\"choice\",\"choice\":\"billing\",\"probabilities\":{\"billing\":0.9},\"derived\":{\"margin\":0.8,\"isNoMatch\":false}}"));
+    JsonNode policy = Json
+        .read("{\"routeQuestion\":\"team\",\"team\":{\"minProbability\":0.5},\"intent\":{\"minProbability\":0.5}}");
+    ObjectNode result = PolicyEvaluator.evaluate(answers, policy);
+    assertEquals("billing", result.get("routeKey").asText());
+    assertEquals("ACCEPT", result.get("action").asText());
+  }
+
   private static ObjectNode noul(double value) {
     return (ObjectNode) Json.read("{\"urgent\":{\"type\":\"noul\",\"noul\":" + value + "}}");
   }

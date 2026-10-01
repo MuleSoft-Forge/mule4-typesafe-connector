@@ -15,6 +15,7 @@ public class PolicyInputResolver extends InputStaticTypeResolver {
   @Override
   public MetadataType getStaticMetadata() {
     ObjectTypeBuilder policy = BaseTypeBuilder.create(MetadataFormat.JSON).objectType().id("typesafe-policy");
+    policy.addField().key("routeQuestion").required(false).value().stringType();
     ObjectTypeBuilder rule = policy.openWith().objectType().id("typesafe-policy-rule");
     rule.addField().key("minProbability").required(false).value().numberType();
     rule.addField().key("minConfidence").required(false).value().numberType();

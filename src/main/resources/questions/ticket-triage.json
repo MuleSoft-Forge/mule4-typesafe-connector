@@ -29,6 +29,7 @@
     }
   },
   "policy": {
+    "routeQuestion": "team",
     "team": {
       "minProbability": 0.55,
       "minMargin": 0.15,

@@ -31,9 +31,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * Fires once when a monitored decision metric moves past its threshold versus a baseline window, and re-arms when every
  * metric is back inside its threshold. It reads the privacy-safe aggregates the {@link DecisionStatsRecorder} keeps —
- * no-match rate, mean confidence and the choice/level distribution — and compares the current window to either the
- * first recorded window or the previous full one. Distribution shift uses {@link DriftMath#jensenShannon}, bounded to
- * {@code [0, 1]}.
+ * no-match rate, mean confidence (Choice/Score confidence, or Noul certainty {@code |noul − 0.5| × 2}) and the
+ * choice/level/noul-band distribution — and compares the current window to either the first recorded window or the
+ * previous full one. Distribution shift uses {@link DriftMath#jensenShannon}, bounded to {@code [0, 1]}.
  */
 @Alias("on-drift-detected")
 @DisplayName("On Drift Detected")
@@ -83,7 +83,7 @@ public class DriftDetectedSource extends PollingSource<InputStream, Void> {
 
   @Parameter
   @Optional(defaultValue = "0.10")
-  @Summary("Fire when mean confidence drops by more than this below the baseline.")
+  @Summary("Fire when mean confidence (or Noul certainty) drops by more than this below the baseline.")
   private double maxMeanConfidenceDrop;
 
   @Parameter

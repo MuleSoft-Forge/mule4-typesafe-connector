@@ -181,12 +181,19 @@ public class BatchOperations {
   /**
    * Keeps the items for which a yes/no question clears a probability threshold. Items are packed several to a call (one
    * Noul question per item, {@code chunkSize} items per chunk) so filtering a long list costs a handful of calls rather
-   * than one per item. The payload is {@code {kept, dropped, scores}} — {@code kept}/{@code dropped} are the original
-   * items partitioned by the threshold, {@code scores} carries each item's index, {@code noul} (the probability of
-   * "yes") and whether it was kept. {@link BatchAttributes} carry the totals.
+   * than one per item. Item text lives in {@code state.items}; each question only references {@code items[i]}, matching
+   * TypeSafe's packing pattern so untrusted content is not concatenated into the instructions.
+   * <p>
+   * The payload is {@code {kept, dropped, uncertain, scores}}. When {@code dropBelow} is unset it equals
+   * {@code threshold} (binary keep/drop). When {@code dropBelow} is lower than {@code threshold}, values in between go
+   * to {@code uncertain}. Each score row has {@code index}, {@code noul}, {@code band}
+   * ({@code kept}/{@code dropped}/{@code uncertain}) and {@code kept} (true only for the kept band).
+   * {@link BatchAttributes} carry the totals ({@code succeeded} is the kept count).
    * <p>
    * Each uncached chunk calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
-   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a> and
+   * <a href="https://docs.typesafe.ai/model-jaggedness/jev-1.13">https://docs.typesafe.ai/model-jaggedness/jev-1.13</a>
+   * (pack items in state, ask about {@code items[i]}).
    */
   @Alias("filter")
   @DisplayName("[Select] Filter")
@@ -195,8 +202,10 @@ public class BatchOperations {
   @Throws(BatchErrorTypeProvider.class)
   public void filter(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
       @Content @TypeResolver(BatchItemsInputResolver.class) @DisplayName("Items") InputStream items,
-      @DisplayName("Question") @Summary("The yes/no question asked of each item.") String question,
+      @DisplayName("Question") @Summary("The yes/no question asked of each item (items live in state as items[i]).") String question,
       @Optional(defaultValue = "0.5") @Summary("Keep items whose probability of 'yes' is at least this.") double threshold,
+      @Optional @DisplayName("Drop below") @Summary("Drop items whose probability of 'yes' is below this. Defaults to "
+          + "Threshold (binary keep/drop). Set lower than Threshold to leave a middle uncertain band.") Double dropBelow,
       @Optional(defaultValue = "20") @Summary("Items packed into one call (1-100).") int chunkSize,
       @Optional @DisplayName("Text field") @Summary("Field whose text is shown to the model; the whole item when "
           + "unset.") String textField,
@@ -217,8 +226,16 @@ public class BatchOperations {
       return;
     }
 
+    double drop = dropBelow == null ? threshold : dropBelow.doubleValue();
+    if (drop > threshold) {
+      callback
+          .error(new ModuleException("dropBelow (" + drop + ") must not be greater than threshold (" + threshold + ")",
+              TypeSafeErrorType.INVALID_QUESTION_SET));
+      return;
+    }
+
     if (states.isEmpty()) {
-      emitFilter(callback, states, new ArrayList<>(), new ArrayList<>(), threshold);
+      emitFilter(callback, states, new ArrayList<>(), new ArrayList<>(), threshold, drop);
       return;
     }
 
@@ -233,36 +250,44 @@ public class BatchOperations {
     boolean useCache = config.isCacheEnabled() && options.isUseCache() && connection.cache() != null;
     List<Supplier<CompletableFuture<UnitResult>>> tasks = new ArrayList<>(chunks.size());
     for (int[] bounds : chunks) {
+      ObjectNode state = Json.object();
+      ArrayNode packed = state.putArray("items");
       ObjectNode questions = Json.object();
       for (int i = bounds[0]; i < bounds[1]; i++) {
-        ObjectNode noul = questions.putObject("item" + (i - bounds[0]));
+        int local = i - bounds[0];
+        packed.add(itemForState(states.get(i), textField));
+        ObjectNode noul = questions.putObject("item" + local);
         noul.put("type", "noul");
-        noul.put("instructions", question + "\n\nItem:\n" + itemText(states.get(i), textField));
+        noul.put("instructions", "Regarding `items[" + local + "]`: " + question);
       }
-      DecisionRequest request = new DecisionRequest(Json.object(), options.getModelOverride(), questions,
-          new HashMap<>(), null, null);
+      DecisionRequest request = new DecisionRequest(state, options.getModelOverride(), questions, new HashMap<>(), null,
+          null);
       tasks.add(() -> decide(config, connection, request, context, useCache));
     }
 
     int concurrency = Math.max(1, Math.min(maxConcurrency, MAX_CONCURRENCY));
     List<JsonNode> statesFinal = states;
     List<int[]> chunksFinal = chunks;
+    double thresholdFinal = threshold;
+    double dropFinal = drop;
     BoundedFanout.run(concurrency, tasks).whenComplete((chunkResults, error) -> {
       if (error != null) {
         callback.error(unwrap(error));
         return;
       }
-      emitFilter(callback, statesFinal, chunksFinal, chunkResults, threshold);
+      emitFilter(callback, statesFinal, chunksFinal, chunkResults, thresholdFinal, dropFinal);
     });
   }
 
   /**
-   * Partitions the items by the threshold from the per-chunk Noul answers, then streams {@code {kept,dropped,scores}}.
+   * Partitions the items by the thresholds from the per-chunk Noul answers, then streams
+   * {@code {kept,dropped,uncertain,scores}}.
    */
   private void emitFilter(CompletionCallback<InputStream, BatchAttributes> callback, List<JsonNode> states,
-      List<int[]> chunks, List<UnitResult> chunkResults, double threshold) {
+      List<int[]> chunks, List<UnitResult> chunkResults, double threshold, double dropBelow) {
     ArrayNode kept = Json.mapper().createArrayNode();
     ArrayNode dropped = Json.mapper().createArrayNode();
+    ArrayNode uncertain = Json.mapper().createArrayNode();
     ArrayNode scores = Json.mapper().createArrayNode();
     int inputTokens = 0;
     int outputTokens = 0;
@@ -299,19 +324,25 @@ public class BatchOperations {
       for (int i = bounds[0]; i < bounds[1]; i++) {
         JsonNode answer = answers.path("item" + (i - bounds[0]));
         double noul = answer.path("noul").asDouble(0.0);
-        boolean keep = noul >= threshold;
-        scores.addObject().put("index", i).put("noul", noul).put("kept", keep);
-        if (keep) {
+        String band;
+        if (noul >= threshold) {
+          band = "kept";
           kept.add(states.get(i).deepCopy());
-        } else {
+        } else if (noul < dropBelow) {
+          band = "dropped";
           dropped.add(states.get(i).deepCopy());
+        } else {
+          band = "uncertain";
+          uncertain.add(states.get(i).deepCopy());
         }
+        scores.addObject().put("index", i).put("noul", noul).put("band", band).put("kept", "kept".equals(band));
       }
     }
 
     ObjectNode payload = Json.object();
     payload.set("kept", kept);
     payload.set("dropped", dropped);
+    payload.set("uncertain", uncertain);
     payload.set("scores", scores);
     BatchAttributes attributes = new BatchAttributes(states.size(), kept.size(), 0, 0, cached,
         new TokenUsage(inputTokens, outputTokens), cost);
@@ -320,12 +351,13 @@ public class BatchOperations {
         .attributes(attributes).build());
   }
 
-  private static String itemText(JsonNode item, String textField) {
+  /** The value placed in {@code state.items[i]}: a text field when configured, otherwise the whole item. */
+  private static JsonNode itemForState(JsonNode item, String textField) {
     if (textField != null && !textField.isBlank()) {
       JsonNode value = item.get(textField);
-      return value != null && !value.isNull() ? value.asText() : "";
+      return value != null && !value.isNull() ? value.deepCopy() : Json.mapper().getNodeFactory().textNode("");
     }
-    return Json.write(item);
+    return item.deepCopy();
   }
 
   /** Runs one decision through the cache → budget → engine path, capturing every outcome as a total result. */

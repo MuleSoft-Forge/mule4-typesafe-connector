@@ -19,6 +19,10 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   `reviewLevels`. The MUnit reference flow asserts `REVIEW` explicitly instead of treating `REJECT` as review.
 - **`apply-policy` and `select-candidate` DataSense.** Both declare all four message parts. `select-candidate` was
   missing input/output resolvers and input attributes entirely.
+- **Filter packed untrusted item text into instructions.** Chunks now put items in `state.items` and ask about
+  `items[i]`, matching TypeSafe's packing pattern.
+- **Drift ignored Noul-only traffic.** Stats now treat Noul certainty (`|noul − 0.5| × 2`) like confidence and record
+  yes/no/uncertain bands for distribution shift, so On Drift Detected works without Choice/Score confidence.
 
 ### Added
 - **Per-option Choice policy rules.** A Choice rule may set `options.<id>` with its own `action`, `minProbability`,
@@ -27,6 +31,10 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 - **Three-band Noul policy rules.** Prefer `yesAbove` / `noBelow` with `onYes` / `onNo` / `onUncertain` (defaults
   `ACCEPT` / `ACCEPT` / `REVIEW`). Legacy `acceptAbove` / `rejectBelow` still works but must not be mixed with the
   three-band form.
+- **`policy.routeQuestion`.** Names which Choice supplies `routeKey`, so reordering questions no longer silently changes
+  routing. Falls back to the first Choice answer when unset.
+- **Filter uncertain band.** Optional `dropBelow` below `threshold` partitions items into `kept` / `uncertain` /
+  `dropped`. Scores include `band` and `|noul−0.5|`-style middle cases are no longer forced into keep or drop.
 
 ### Changed
 - **`apply-policy` fails closed.** It used to return `ACCEPT` whenever it had nothing to judge. Each of these is now

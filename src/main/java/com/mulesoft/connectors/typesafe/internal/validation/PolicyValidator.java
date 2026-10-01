@@ -46,12 +46,37 @@ public final class PolicyValidator {
       errors.add("policy must be an object mapping question id to rule");
       return new ValidationResult(errors, warnings);
     }
+    validateRouteQuestion(policy, questions, errors);
     Iterator<Map.Entry<String, JsonNode>> it = policy.fields();
     while (it.hasNext()) {
       Map.Entry<String, JsonNode> entry = it.next();
+      if (PolicyRules.ROUTE_QUESTION.equals(entry.getKey())) {
+        continue;
+      }
       validateRule(entry.getKey(), entry.getValue(), questions, errors, warnings);
     }
     return new ValidationResult(errors, warnings);
+  }
+
+  private static void validateRouteQuestion(JsonNode policy, JsonNode questions, List<String> errors) {
+    JsonNode routeQuestion = policy.get(PolicyRules.ROUTE_QUESTION);
+    if (routeQuestion == null || routeQuestion.isNull()) {
+      return;
+    }
+    if (!routeQuestion.isTextual() || routeQuestion.asText().isBlank()) {
+      errors.add("policy.routeQuestion must be the id of a Choice question");
+      return;
+    }
+    if (questions == null) {
+      return;
+    }
+    String id = routeQuestion.asText();
+    JsonNode question = questions.get(id);
+    if (question == null || !question.isObject()) {
+      errors.add("policy.routeQuestion '" + id + "' does not match a question id");
+    } else if (!PolicyRules.CHOICE.equals(question.path("type").asText(""))) {
+      errors.add("policy.routeQuestion '" + id + "' must name a choice question");
+    }
   }
 
   private void validateRule(String id, JsonNode rule, JsonNode questions, List<String> errors, List<String> warnings) {

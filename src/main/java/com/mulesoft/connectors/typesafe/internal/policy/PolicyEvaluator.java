@@ -26,7 +26,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * <li>Score {@code {acceptLevels, reviewLevels, minConfidence}}.
  * </ul>
  * The overall action is the most cautious outcome across every judged question: {@code REJECT} beats {@code REVIEW}
- * beats {@code ACCEPT}.
+ * beats {@code ACCEPT}. {@code routeKey} is the chosen option of the Choice named by top-level
+ * {@code policy.routeQuestion}, or of the first Choice answer when that key is absent.
  *
  * <p>
  * The evaluator fails closed. A decision with no answers, a policied question with no answer, an answer of unknown
@@ -57,7 +58,11 @@ public final class PolicyEvaluator {
     ObjectNode perQuestion = Json.object();
     List<String> reasons = new ArrayList<>();
     Action overall = Action.ACCEPT;
+    String routeQuestion = policy != null && policy.hasNonNull(PolicyRules.ROUTE_QUESTION)
+        ? policy.get(PolicyRules.ROUTE_QUESTION).asText()
+        : null;
     String routeKey = null;
+    String firstChoiceRoute = null;
     int judged = 0;
 
     Iterator<Map.Entry<String, JsonNode>> it = answers.fields();
@@ -74,15 +79,28 @@ public final class PolicyEvaluator {
       overall = maxSeverity(overall, outcome.action);
       reasons.addAll(outcome.reasons);
       record(perQuestion, id, outcome);
-      if (routeKey == null && "choice".equals(answer.path("type").asText(""))) {
-        routeKey = answer.path("choice").asText(null);
+      if ("choice".equals(answer.path("type").asText(""))) {
+        String choice = answer.path("choice").asText(null);
+        if (firstChoiceRoute == null) {
+          firstChoiceRoute = choice;
+        }
+        if (routeQuestion != null && routeQuestion.equals(id)) {
+          routeKey = choice;
+        }
       }
+    }
+
+    if (routeKey == null) {
+      routeKey = firstChoiceRoute;
     }
 
     if (policy != null && policy.isObject()) {
       Iterator<String> policied = policy.fieldNames();
       while (policied.hasNext()) {
         String id = policied.next();
+        if (PolicyRules.ROUTE_QUESTION.equals(id)) {
+          continue;
+        }
         if (answers.path(id).isObject()) {
           continue;
         }
@@ -92,6 +110,11 @@ public final class PolicyEvaluator {
         reasons.addAll(missing.reasons);
         record(perQuestion, id, missing);
       }
+    }
+
+    if (routeQuestion != null && !answers.path(routeQuestion).isObject()) {
+      overall = maxSeverity(overall, Action.REVIEW);
+      reasons.add(PolicyRules.ROUTE_QUESTION + ": no Choice answer for '" + routeQuestion + "'");
     }
 
     if (judged == 0) {

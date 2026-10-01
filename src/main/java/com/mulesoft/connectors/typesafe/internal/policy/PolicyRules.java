@@ -18,6 +18,11 @@ public final class PolicyRules {
   public static final String SCORE = "score";
 
   /**
+   * Optional top-level policy key naming which Choice question supplies {@code routeKey}. Not a per-question rule.
+   */
+  public static final String ROUTE_QUESTION = "routeQuestion";
+
+  /**
    * Rule keys each question type reads. Choice may also nest per-option thresholds under {@code options}. Noul accepts
    * either the three-band form ({@code yesAbove}/{@code noBelow}/{@code onYes}/{@code onNo}/{@code onUncertain}) or the
    * legacy {@code acceptAbove}/{@code rejectBelow} form.

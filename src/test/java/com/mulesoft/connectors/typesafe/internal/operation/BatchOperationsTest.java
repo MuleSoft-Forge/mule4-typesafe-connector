@@ -7,6 +7,7 @@ import org.mule.sdk.api.runtime.process.CompletionCallback;
 import com.mulesoft.connectors.typesafe.api.attributes.BatchAttributes;
 import com.mulesoft.connectors.typesafe.internal.config.TypeSafeConfiguration;
 import com.mulesoft.connectors.typesafe.internal.connection.TypeSafeConnection;
+import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
 import com.mulesoft.connectors.typesafe.internal.engine.BudgetGuard;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionEngine;
 import com.mulesoft.connectors.typesafe.internal.engine.RetryPolicy;
@@ -25,8 +26,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -140,7 +143,7 @@ class BatchOperationsTest {
   void filterKeepsItemsClearingTheThreshold() {
     Capture<BatchAttributes> capture = new Capture<>();
     operations.filter(config(), connection(new MockAdapter(0.8, 0)), json("[{\"t\":\"x\"},{\"t\":\"y\"}]"), "relevant?",
-        0.5, 20, "t", 4, null, new RequestOptions(), capture);
+        0.5, null, 20, "t", 4, null, new RequestOptions(), capture);
 
     JsonNode payload = capture.payload();
     assertEquals(2, payload.get("kept").size());
@@ -155,7 +158,7 @@ class BatchOperationsTest {
   void filterDropsItemsBelowTheThreshold() {
     Capture<BatchAttributes> capture = new Capture<>();
     operations.filter(config(), connection(new MockAdapter(0.8, 0)), json("[{\"t\":\"x\"},{\"t\":\"y\"}]"), "relevant?",
-        0.95, 20, null, 4, null, new RequestOptions(), capture);
+        0.95, null, 20, null, 4, null, new RequestOptions(), capture);
 
     JsonNode payload = capture.payload();
     assertEquals(0, payload.get("kept").size());
@@ -167,11 +170,41 @@ class BatchOperationsTest {
     ProviderAdapter adapter = spy(new MockAdapter(0.8, 0));
     Capture<BatchAttributes> capture = new Capture<>();
     operations.filter(config(), connection(adapter), json("[{\"t\":\"a\"},{\"t\":\"b\"},{\"t\":\"c\"}]"), "relevant?",
-        0.5, 2, "t", 4, null, new RequestOptions(), capture);
+        0.5, null, 2, "t", 4, null, new RequestOptions(), capture);
 
     // Three items at chunkSize 2 is two chunks, so two billed calls.
     verify(adapter, times(2)).evaluate(any());
     assertEquals(3, capture.payload().get("scores").size());
+  }
+
+  @Test
+  void filterLeavesAMiddleBandUncertain() {
+    Capture<BatchAttributes> capture = new Capture<>();
+    operations.filter(config(), connection(new MockAdapter(0.5, 0)), json("[{\"t\":\"x\"}]"), "relevant?", 0.7, 0.3, 20,
+        "t", 4, null, new RequestOptions(), capture);
+
+    JsonNode payload = capture.payload();
+    assertEquals(0, payload.get("kept").size());
+    assertEquals(0, payload.get("dropped").size());
+    assertEquals(1, payload.get("uncertain").size());
+    assertEquals("uncertain", payload.get("scores").get(0).get("band").asText());
+    assertFalse(payload.get("scores").get(0).get("kept").asBoolean());
+  }
+
+  @Test
+  void filterPacksItemsInStateNotInstructions() {
+    ProviderAdapter adapter = spy(new MockAdapter(0.9, 0));
+    Capture<BatchAttributes> capture = new Capture<>();
+    operations.filter(config(), connection(adapter), json("[{\"t\":\"hello\"}]"), "Is this urgent?", 0.5, null, 20, "t",
+        4, null, new RequestOptions(), capture);
+
+    ArgumentCaptor<DecisionRequest> captor = ArgumentCaptor.forClass(DecisionRequest.class);
+    verify(adapter).evaluate(captor.capture());
+    DecisionRequest request = captor.getValue();
+    assertEquals("hello", request.state().path("items").get(0).asText());
+    assertEquals("Regarding `items[0]`: Is this urgent?",
+        request.questions().path("item0").path("instructions").asText());
+    assertFalse(request.questions().path("item0").path("instructions").asText().contains("hello"));
   }
 
   private static long countStatus(JsonNode payload, String status) {
