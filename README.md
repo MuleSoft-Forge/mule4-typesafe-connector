@@ -11,7 +11,7 @@ Jev is a decision model, not a chat model. You give it a **state** plus named, t
 those answers first-class Mule values that drive Choice routers, Batch filters, error
 handlers and follow-up calls.
 
-> **Status:** version **1.0.1**. The GitHub release includes the connector skeleton,
+> **Status:** version **1.0.2**. The GitHub release includes the connector skeleton,
 > transport and decision engine, all five routes plus failover, the full
 > decide/policy/utility operation set with DataSense, and scale operations plus governance —
 > cache, budget guard, stats and the three monitoring sources. See [`PLAN.md`](PLAN.md) §15
@@ -114,7 +114,7 @@ threshold.
 <dependency>
   <groupId>com.mulesoftforge</groupId>
   <artifactId>mule4-typesafe-connector</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <classifier>mule-plugin</classifier>
 </dependency>
 ```

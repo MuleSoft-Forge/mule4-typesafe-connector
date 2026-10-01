@@ -5,6 +5,8 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-01
+
 ### Fixed
 - **`apply-policy` `raiseOnReject` / `raiseOnReview` never worked in 1.0.1.** The operation threw
   `TYPESAFE:REJECTED` / `TYPESAFE:BELOW_THRESHOLD`, but those types were not declared on `@Throws`, so Mule rewrote
