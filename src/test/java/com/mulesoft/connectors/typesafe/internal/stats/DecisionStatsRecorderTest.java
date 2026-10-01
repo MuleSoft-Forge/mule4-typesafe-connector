@@ -59,6 +59,22 @@ class DecisionStatsRecorderTest {
     assertTrue(recorder.failoverEventsSince(System.currentTimeMillis() + 1000L).isEmpty());
   }
 
+  @Test
+  void noulAnswersContributeCertaintyAndBandToTheWindow() {
+    ObjectNode answers = Json.object();
+    answers.putObject("urgent").put("type", "noul").put("noul", 0.5);
+    answers.putObject("clear").put("type", "noul").put("noul", 0.9);
+    DecisionOutcome outcome = new DecisionOutcome(answers, DecisionAttributes.builder().provider("mock").build());
+    recorder.record(req(), outcome, 100);
+
+    DecisionStatsRecorder.Window current = recorder.windowsFor("triage").current();
+    // certainty: |0.5-0.5|*2 = 0, |0.9-0.5|*2 = 0.8 → mean 0.4 over two answers in one decision...
+    // actually accumulate runs per answer in one decision, so confidenceCount=2, sum=0+0.8
+    assertEquals(0.4, current.meanConfidence(), 1e-9);
+    assertEquals(1L, current.distribution().get("urgent").get("uncertain"));
+    assertEquals(1L, current.distribution().get("clear").get("yes"));
+  }
+
   private static DecisionRequest req() {
     return new DecisionRequest(Json.read("{\"x\":1}"), null, (ObjectNode) Json.read("{}"), Map.of(), "triage", "1");
   }

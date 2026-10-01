@@ -87,6 +87,111 @@ class PolicyEvaluatorTest {
     assertEquals("REJECT", PolicyEvaluator.evaluate(decision, policy).get("action").asText());
   }
 
+  @Test
+  void emptyDecisionIsReviewedNotAccepted() {
+    ObjectNode result = PolicyEvaluator.evaluate(Json.object(), Json.read(CHOICE_POLICY));
+    assertEquals("REVIEW", result.get("action").asText());
+    assertTrue(result.get("reasons").toString().contains("no answers to judge"));
+  }
+
+  @Test
+  void decisionWithNoAnswerObjectsIsReviewedEvenWithoutPolicy() {
+    assertEquals("REVIEW", action(Json.read("{\"foo\":\"bar\"}"), Json.object()));
+  }
+
+  @Test
+  void policiedQuestionWithoutAnAnswerIsReviewed() {
+    JsonNode policy = Json
+        .read("{\"team\":{\"minProbability\":0.55},\"urgent\":{\"acceptAbove\":0.7,\"rejectBelow\":0.3}}");
+    ObjectNode result = PolicyEvaluator.evaluate(choice(0.7, 0.5, false), policy);
+    assertEquals("REVIEW", result.get("action").asText());
+    assertEquals("ACCEPT", result.at("/perQuestion/team/action").asText());
+    assertEquals("REVIEW", result.at("/perQuestion/urgent/action").asText());
+    assertEquals("urgent: no answer to judge", result.at("/perQuestion/urgent/reasons/0").asText());
+  }
+
+  @Test
+  void shortcutAnswerJudgedAgainstAQuestionSetPolicyIsReviewed() {
+    // A single answer is judged as "result", so a file policy keyed by real question ids finds nothing to judge.
+    JsonNode decision = Json.read("{\"type\":\"noul\",\"noul\":0.9}");
+    assertEquals("REVIEW", action(decision, Json.read("{\"urgent\":{\"acceptAbove\":0.7}}")));
+  }
+
+  @Test
+  void ruleThatDoesNotFitTheAnswerTypeIsReviewed() {
+    JsonNode policy = Json.read("{\"team\":{\"acceptAbove\":0.7}}");
+    ObjectNode result = PolicyEvaluator.evaluate(choice(0.9, 0.8, false), policy);
+    assertEquals("REVIEW", result.get("action").asText());
+    assertEquals("team: rule does not fit a 'choice' answer", result.at("/perQuestion/team/reasons/0").asText());
+  }
+
+  @Test
+  void ruleWithAMisspeltKeyIsReviewed() {
+    JsonNode policy = Json.read("{\"team\":{\"minProbabilty\":0.99}}");
+    assertEquals("REVIEW", action(choice(0.9, 0.8, false), policy));
+  }
+
+  @Test
+  void answerOfUnknownTypeIsReviewedWhenARuleNamesIt() {
+    JsonNode decision = Json.read("{\"x\":{\"type\":\"rating\",\"value\":3}}");
+    assertEquals("REVIEW", action(decision, Json.read("{\"x\":{}}")));
+    assertEquals("ACCEPT", action(decision, Json.object()));
+  }
+
+  @Test
+  void perOptionChoiceCanDemandHigherConfidenceOrMapToReview() {
+    String answers = "{\"team\":{\"type\":\"choice\",\"choice\":\"other\",\"confidence\":0.6,"
+        + "\"probabilities\":{\"billing\":0.2,\"other\":0.6},\"derived\":{\"margin\":0.4,\"isNoMatch\":false}}}";
+    JsonNode soft = Json.read("{\"team\":{\"minProbability\":0.55,\"options\":{\"other\":{\"action\":\"REVIEW\"}}}}");
+    assertEquals("REVIEW", action(Json.read(answers), soft));
+
+    JsonNode strict = Json.read("{\"team\":{\"minProbability\":0.55,\"options\":{\"other\":{\"minConfidence\":0.8}}}}");
+    assertEquals("REVIEW", action(Json.read(answers), strict));
+
+    JsonNode ok = Json.read("{\"team\":{\"minProbability\":0.55,\"options\":{\"other\":{\"minConfidence\":0.5}}}}");
+    assertEquals("ACCEPT", action(Json.read(answers), ok));
+  }
+
+  @Test
+  void otherOptionsAppliesWhenTheChoiceIsNotListed() {
+    String answers = "{\"team\":{\"type\":\"choice\",\"choice\":\"account\",\"confidence\":0.9,"
+        + "\"probabilities\":{\"account\":0.9},\"derived\":{\"margin\":0.9,\"isNoMatch\":false}}}";
+    JsonNode policy = Json
+        .read("{\"team\":{\"options\":{\"billing\":{\"action\":\"ACCEPT\"}},\"otherOptions\":\"REVIEW\"}}");
+    assertEquals("REVIEW", action(Json.read(answers), policy));
+  }
+
+  @Test
+  void threeBandNoulMapsYesNoAndUncertainSeparately() {
+    JsonNode policy = Json.read(
+        "{\"urgent\":{\"yesAbove\":0.7,\"noBelow\":0.3,\"onYes\":\"ACCEPT\",\"onNo\":\"ACCEPT\",\"onUncertain\":\"REVIEW\"}}");
+    assertEquals("ACCEPT", action(noul(0.9), policy));
+    assertEquals("ACCEPT", action(noul(0.1), policy));
+    assertEquals("REVIEW", action(noul(0.5), policy));
+  }
+
+  @Test
+  void threeBandNoulCanEscalateAClearYes() {
+    JsonNode policy = Json
+        .read("{\"urgent\":{\"yesAbove\":0.7,\"noBelow\":0.3,\"onYes\":\"REVIEW\",\"onNo\":\"ACCEPT\"}}");
+    assertEquals("REVIEW", action(noul(0.95), policy));
+    assertEquals("ACCEPT", action(noul(0.1), policy));
+  }
+
+  @Test
+  void routeQuestionSelectsWhichChoiceSuppliesRouteKey() {
+    ObjectNode answers = Json.object();
+    answers.set("intent", Json.read(
+        "{\"type\":\"choice\",\"choice\":\"support\",\"probabilities\":{\"support\":0.9},\"derived\":{\"margin\":0.8,\"isNoMatch\":false}}"));
+    answers.set("team", Json.read(
+        "{\"type\":\"choice\",\"choice\":\"billing\",\"probabilities\":{\"billing\":0.9},\"derived\":{\"margin\":0.8,\"isNoMatch\":false}}"));
+    JsonNode policy = Json
+        .read("{\"routeQuestion\":\"team\",\"team\":{\"minProbability\":0.5},\"intent\":{\"minProbability\":0.5}}");
+    ObjectNode result = PolicyEvaluator.evaluate(answers, policy);
+    assertEquals("billing", result.get("routeKey").asText());
+    assertEquals("ACCEPT", result.get("action").asText());
+  }
+
   private static ObjectNode noul(double value) {
     return (ObjectNode) Json.read("{\"urgent\":{\"type\":\"noul\",\"noul\":" + value + "}}");
   }

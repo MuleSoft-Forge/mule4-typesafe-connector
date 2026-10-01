@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Writes compact, privacy-safe counters after every decision so the drift, budget and failover sources can poll them
  * without touching operation threads. It records only aggregates — decision counts, no-match counts, confidence sums
- * and choice/level distributions per {@code questionSetId} — and a bounded ring of recent failover events. It never
- * stores state text, keys or raw bodies.
+ * (and for Noul answers, certainty {@code |noul − 0.5| × 2}), choice/level/noul-band distributions per
+ * {@code questionSetId} — and a bounded ring of recent failover events. It never stores state text, keys or raw bodies.
  *
  * <p>
  * Decisions are aggregated into fixed-size windows of {@code windowSize} decisions. When a window fills it rolls into
@@ -115,16 +115,34 @@ public final class DecisionStatsRecorder {
     if (answer.hasNonNull("confidence")) {
       window.confidenceSum += answer.get("confidence").asDouble();
       window.confidenceCount++;
+    } else if ("noul".equals(answer.path("type").asText("")) && answer.has("noul")) {
+      // Noul has no confidence field; |noul − 0.5| × 2 is 1 at a clear yes/no and 0 at "I don't know".
+      double certainty = Math.abs(answer.get("noul").asDouble(0.5) - 0.5) * 2.0;
+      window.confidenceSum += certainty;
+      window.confidenceCount++;
     }
     String value = null;
     if (answer.hasNonNull("choice")) {
       value = answer.get("choice").asText();
     } else if (derived != null && derived.hasNonNull("level")) {
       value = derived.get("level").asText();
+    } else if ("noul".equals(answer.path("type").asText("")) && answer.has("noul")) {
+      value = noulBand(answer.get("noul").asDouble(0.5));
     }
     if (value != null) {
       window.distribution.computeIfAbsent(questionId, k -> new java.util.HashMap<>()).merge(value, 1L, Long::sum);
     }
+  }
+
+  /** Buckets a Noul for distribution drift: clear yes, clear no, or uncertain middle. */
+  private static String noulBand(double noul) {
+    if (noul >= 0.7) {
+      return "yes";
+    }
+    if (noul < 0.3) {
+      return "no";
+    }
+    return "uncertain";
   }
 
   private void recordFailover(DecisionAttributes attributes) throws ObjectStoreException {

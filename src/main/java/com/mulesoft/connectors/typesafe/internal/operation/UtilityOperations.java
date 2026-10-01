@@ -45,6 +45,7 @@ import com.mulesoft.connectors.typesafe.internal.provider.ProviderAdapter;
 import com.mulesoft.connectors.typesafe.internal.questionset.QuestionSet;
 import com.mulesoft.connectors.typesafe.internal.questionset.QuestionSetLoader;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
+import com.mulesoft.connectors.typesafe.internal.validation.PolicyValidator;
 import com.mulesoft.connectors.typesafe.internal.validation.QuestionSetValidator;
 import com.mulesoft.connectors.typesafe.internal.validation.ValidationResult;
 import com.mulesoft.connectors.typesafe.internal.value.QuestionSetValueProvider;
@@ -201,6 +202,13 @@ public class UtilityOperations {
    * criteria. warnings flag a legal set that is likely to behave poorly: a choice with no no-match option, a duplicate
    * or empty option description, a score with fewer than 3 levels, or a choice with more than 20 options.
    * <p>
+   * When Question set names a file with a policy block, the policy is checked against the file's questions too, with
+   * messages prefixed policy.&lt;id&gt;. errors: a rule for a question id that does not exist, an unknown key, a key
+   * for a different question type, a threshold that is not a number from 0 to 1, an action other than ACCEPT, REVIEW or
+   * REJECT, rejectBelow above acceptAbove, a Score level out of range or in both lists, and a Score rule with no levels
+   * listed. warnings: a yes/no rule whose rejectBelow rejects the whole decision on a "no", and Score levels that are
+   * neither accepted nor reviewed. Apply Policy raises the same errors before it evaluates.
+   * <p>
    * The operation reads no incoming message attributes and writes none.
    * <p>
    * The limits are the ones documented at <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
@@ -214,22 +222,26 @@ public class UtilityOperations {
       @Optional @Content @TypeResolver(QuestionsInputResolver.class) @DisplayName("Questions") @Summary("JSON object of question id to question. Leave empty when Question set names a classpath file.") InputStream questions,
       @Optional @DisplayName("Question set") @OfValues(QuestionSetValueProvider.class) @Summary("Classpath question-set file. Leave empty when Questions carries the object.") String questionSet,
       @Optional @TypeResolver(QuestionSetValidationInputAttributesResolver.class) @DisplayName("Input attributes") @Placement(tab = "Advanced", order = 1) @Summary("Unused. Validate reads no incoming message attributes.") Object inputAttributes) {
-    JsonNode questionsNode = resolveQuestions(config, questions, questionSet);
-    Map<String, String> noMatchOptions = noMatchOptions(questionsNode);
+    Document document = resolveDocument(config, questions, questionSet);
+    Map<String, String> noMatchOptions = noMatchOptions(document.questions);
 
-    ValidationResult result = new QuestionSetValidator().validate(questionsNode, noMatchOptions);
+    ValidationResult result = new QuestionSetValidator().validate(document.questions, noMatchOptions);
+    ValidationResult policyResult = new PolicyValidator().validate(document.policy, document.questions);
 
     ObjectNode payload = Json.object();
-    payload.put("valid", result.isValid());
+    payload.put("valid", result.isValid() && policyResult.isValid());
     ArrayNode errors = payload.putArray("errors");
     result.getErrors().forEach(errors::add);
+    policyResult.getErrors().forEach(errors::add);
     ArrayNode warnings = payload.putArray("warnings");
     result.getWarnings().forEach(warnings::add);
+    policyResult.getWarnings().forEach(warnings::add);
     byte[] body = Json.write(payload).getBytes(StandardCharsets.UTF_8);
     return Result.<InputStream, Void>builder().output(new ByteArrayInputStream(body)).build();
   }
 
-  private static JsonNode resolveQuestions(TypeSafeConfiguration config, InputStream questions, String questionSet) {
+  /** The questions to check and, for a file, its policy block; inline questions carry no policy. */
+  private static Document resolveDocument(TypeSafeConfiguration config, InputStream questions, String questionSet) {
     boolean hasInline = questions != null;
     boolean hasFile = questionSet != null && !questionSet.isBlank();
     if (hasInline == hasFile) {
@@ -238,10 +250,10 @@ public class UtilityOperations {
     }
     if (hasFile) {
       QuestionSet set = QuestionSetLoader.load(config.getDefaultQuestionSetsLocation(), questionSet);
-      return set.questions();
+      return new Document(set.questions(), set.policy());
     }
     try {
-      return Json.read(questions);
+      return new Document(Json.read(questions), null);
     } catch (RuntimeException e) {
       throw new ModuleException("Could not parse questions as JSON", TypeSafeErrorType.INVALID_QUESTION_SET, e);
     }
@@ -289,6 +301,18 @@ public class UtilityOperations {
       node.putNull(key);
     } else {
       node.put(key, value);
+    }
+  }
+
+  /** A question-set document as Validate Question Set checks it. */
+  private static final class Document {
+
+    private final JsonNode questions;
+    private final JsonNode policy;
+
+    Document(JsonNode questions, JsonNode policy) {
+      this.questions = questions;
+      this.policy = policy;
     }
   }
 

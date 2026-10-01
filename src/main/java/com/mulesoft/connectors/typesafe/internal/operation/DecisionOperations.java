@@ -36,6 +36,8 @@ import com.mulesoft.connectors.typesafe.internal.metadata.NoulAnswerOutputResolv
 import com.mulesoft.connectors.typesafe.internal.metadata.NullInputAttributesResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.QuestionsInputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.ScoreAnswerOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.SelectCandidateInputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.SelectCandidateOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.stats.DecisionStatsRecorder;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 import com.mulesoft.connectors.typesafe.internal.value.QuestionSetValueProvider;
@@ -234,16 +236,22 @@ public class DecisionOperations {
    * an option keyed by {@code idField} and described by {@code labelField} / {@code descriptionField}. The payload
    * names the selected candidate object, its probability and confidence, whether it was a no-match, and the full
    * ranking.
+   * <p>
+   * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
+   * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
    */
   @Alias("select-candidate")
   @DisplayName("[Select] Candidate")
   @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = SelectCandidateOutputResolver.class, attributes = DecisionAttributesResolver.class)
   @Throws(DecisionErrorTypeProvider.class)
   public void selectCandidate(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
-      @Content InputStream candidates, @Content(primary = false) InputStream query, String idField, String labelField,
-      @Optional String descriptionField,
+      @Content @TypeResolver(SelectCandidateInputResolver.class) @DisplayName("Candidates") InputStream candidates,
+      @Content(primary = false) @TypeResolver(JsonInputResolver.class) @DisplayName("Query") InputStream query,
+      String idField, String labelField, @Optional String descriptionField,
       @Optional(defaultValue = "Which candidate best matches the request?") String instructions,
       @Optional(defaultValue = "true") boolean includeNoMatch,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
     List<JsonNode> candidateList;

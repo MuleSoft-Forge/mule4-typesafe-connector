@@ -5,6 +5,54 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+- **`apply-policy` `raiseOnReject` / `raiseOnReview` never worked in 1.0.1.** The operation threw
+  `TYPESAFE:REJECTED` / `TYPESAFE:BELOW_THRESHOLD`, but those types were not declared on `@Throws`, so Mule rewrote
+  them as `MULE:UNKNOWN` and error handlers for the typed errors never matched. The same undeclared-error rewrite hit
+  `INVALID_QUESTION_SET`, `INVALID_STATE` and `TOO_MANY_OPTIONS` from `evaluate`, the shortcuts, `select-candidate`
+  and `validate-question-set`. `apply-policy` now has its own error provider; the decision provider lists the
+  validation errors. MUnit covers both `raiseOnReject` → `TYPESAFE:REJECTED` and an invalid policy →
+  `TYPESAFE:INVALID_QUESTION_SET`.
+- **Sample question sets rejected routine and angry tickets.** `ticket-triage` and `support-ticket-triage` used
+  `rejectBelow` (so a clear "no" on urgency rejected the whole decision) and left "Very negative" sentiment
+  unlisted (so it rejected). They now use three-band Noul (`onNo: ACCEPT`) and put negative sentiment on
+  `reviewLevels`. The MUnit reference flow asserts `REVIEW` explicitly instead of treating `REJECT` as review.
+- **`apply-policy` and `select-candidate` DataSense.** Both declare all four message parts. `select-candidate` was
+  missing input/output resolvers and input attributes entirely.
+- **Filter packed untrusted item text into instructions.** Chunks now put items in `state.items` and ask about
+  `items[i]`, matching TypeSafe's packing pattern.
+- **Drift ignored Noul-only traffic.** Stats now treat Noul certainty (`|noul − 0.5| × 2`) like confidence and record
+  yes/no/uncertain bands for distribution shift, so On Drift Detected works without Choice/Score confidence.
+- **`demo/` was accidentally a Studio project.** Local `.project` / `.classpath` made both sample apps look nested
+  inside a parent Mule project. `demo/` is now a plain scoping folder with a README; import each app from its own
+  directory.
+
+### Added
+- **Per-option Choice policy rules.** A Choice rule may set `options.<id>` with its own `action`, `minProbability`,
+  `minConfidence` and `minMargin`, plus `otherOptions` for a chosen option that is not listed — so riskier options can
+  demand higher confidence.
+- **Three-band Noul policy rules.** Prefer `yesAbove` / `noBelow` with `onYes` / `onNo` / `onUncertain` (defaults
+  `ACCEPT` / `ACCEPT` / `REVIEW`). Legacy `acceptAbove` / `rejectBelow` still works but must not be mixed with the
+  three-band form.
+- **`policy.routeQuestion`.** Names which Choice supplies `routeKey`, so reordering questions no longer silently changes
+  routing. Falls back to the first Choice answer when unset.
+- **Filter uncertain band.** Optional `dropBelow` below `threshold` partitions items into `kept` / `uncertain` /
+  `dropped`. Scores include `band` and `|noul−0.5|`-style middle cases are no longer forced into keep or drop.
+
+### Changed
+- **`apply-policy` fails closed.** It used to return `ACCEPT` whenever it had nothing to judge. Each of these is now
+  `REVIEW` with a reason: a decision with no answers (for example `{}` or the wrong variable), a policy rule whose
+  question has no answer (for example a shortcut answer judged against a question-set policy), an answer of unknown
+  type, and a rule whose keys do not fit its answer's type. Flows that relied on a silent `ACCEPT` now see `REVIEW`.
+- **`apply-policy` validates the policy before applying it** and raises `TYPESAFE:INVALID_QUESTION_SET` on a
+  misspelt key, a rule for a question id that does not exist, keys for the wrong question type, a threshold that is
+  not a number from 0 to 1, an action other than `ACCEPT`/`REVIEW`/`REJECT`, inverted Noul bounds, a Score level out
+  of range or in both lists, or a Score rule with no levels. A file policy is checked against the file's questions;
+  an inline policy is checked for structure.
+- **`validate-question-set` checks a file's `policy` block** with the same rules, as `policy.<id>` errors and
+  warnings. It warns when legacy `rejectBelow` turns a "no" into `REJECT` for the whole decision, and when Score
+  levels are neither accepted nor reviewed.
+
 ## [1.0.1] - 2026-09-28
 
 ### Added
