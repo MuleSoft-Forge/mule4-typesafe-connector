@@ -16,10 +16,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Pure and side-effect free, so it is unit-tested directly and the operation stays a thin adapter.
  *
  * <p>
- * Per question id the policy is type-specific — Choice {@code {minProbability, minConfidence, minMargin, onNoMatch}},
- * Noul {@code {acceptAbove, rejectBelow}}, Score {@code {acceptLevels, reviewLevels, minConfidence}}. The overall
- * action is the most cautious outcome across every judged question: {@code REJECT} beats {@code REVIEW} beats
- * {@code ACCEPT}.
+ * Per question id the policy is type-specific:
+ * <ul>
+ * <li>Choice {@code {minProbability, minConfidence, minMargin, onNoMatch, options, otherOptions}}. {@code options} maps
+ * an option key to its own thresholds and {@code action}; {@code otherOptions} is the action for a chosen option that
+ * {@code options} does not list.
+ * <li>Noul three-band {@code {yesAbove, noBelow, onYes, onNo, onUncertain}} (defaults {@code ACCEPT}/{@code ACCEPT}/
+ * {@code REVIEW}), or legacy {@code {acceptAbove, rejectBelow}} where a clear "no" is {@code REJECT}.
+ * <li>Score {@code {acceptLevels, reviewLevels, minConfidence}}.
+ * </ul>
+ * The overall action is the most cautious outcome across every judged question: {@code REJECT} beats {@code REVIEW}
+ * beats {@code ACCEPT}.
  *
  * <p>
  * The evaluator fails closed. A decision with no answers, a policied question with no answer, an answer of unknown
@@ -148,15 +155,36 @@ public final class PolicyEvaluator {
       return outcome;
     }
     String choice = answer.path("choice").asText(null);
+    JsonNode optionRule = choice == null ? null : rule.path("options").get(choice);
+    if (optionRule != null && optionRule.isObject()) {
+      outcome.action = parseAction(optionRule.path("action").asText("ACCEPT"));
+      if (outcome.action != Action.ACCEPT) {
+        outcome.reasons.add(id + ": option '" + choice + "' maps to " + outcome.action);
+      }
+    } else if (rule.hasNonNull("otherOptions")) {
+      outcome.action = parseAction(rule.get("otherOptions").asText());
+      if (outcome.action != Action.ACCEPT) {
+        outcome.reasons.add(id + ": option '" + choice + "' is not listed; otherOptions is " + outcome.action);
+      }
+    }
+
     double probability = choice == null ? 0.0 : answer.path("probabilities").path(choice).asDouble(0.0);
     double margin = answer.path("derived").path("margin").asDouble(0.0);
-
-    checkMin(outcome, id, "probability", probability, rule.get("minProbability"));
-    checkMin(outcome, id, "margin", margin, rule.get("minMargin"));
+    checkMin(outcome, id, "probability", probability, threshold(rule, optionRule, "minProbability"));
+    checkMin(outcome, id, "margin", margin, threshold(rule, optionRule, "minMargin"));
     if (answer.hasNonNull("confidence")) {
-      checkMin(outcome, id, "confidence", answer.get("confidence").asDouble(), rule.get("minConfidence"));
+      checkMin(outcome, id, "confidence", answer.get("confidence").asDouble(),
+          threshold(rule, optionRule, "minConfidence"));
     }
     return outcome;
+  }
+
+  /** The option's own threshold when it declares one, else the question-level threshold. */
+  private static JsonNode threshold(JsonNode rule, JsonNode optionRule, String key) {
+    if (optionRule != null && optionRule.isObject() && optionRule.has(key)) {
+      return optionRule.get(key);
+    }
+    return rule.get(key);
   }
 
   private static QuestionOutcome judgeNoul(String id, ObjectNode answer, JsonNode rule) {
@@ -165,6 +193,9 @@ public final class PolicyEvaluator {
       return outcome;
     }
     double noul = answer.path("noul").asDouble(0.0);
+    if (PolicyRules.isBandedNoul(rule)) {
+      return judgeNoulBands(id, noul, rule);
+    }
     double acceptAbove = rule.path("acceptAbove").asDouble(Double.NaN);
     double rejectBelow = rule.path("rejectBelow").asDouble(Double.NaN);
     if (!Double.isNaN(rejectBelow) && noul < rejectBelow) {
@@ -173,6 +204,41 @@ public final class PolicyEvaluator {
     } else if (!Double.isNaN(acceptAbove) && noul < acceptAbove) {
       outcome.action = Action.REVIEW;
       outcome.reasons.add(id + ": noul " + round(noul) + " < " + round(acceptAbove));
+    }
+    return outcome;
+  }
+
+  /**
+   * Yes at or above {@code yesAbove}, no below {@code noBelow}, uncertain between. A missing bound takes the other's
+   * value, which leaves no uncertain band.
+   */
+  private static QuestionOutcome judgeNoulBands(String id, double noul, JsonNode rule) {
+    double yesAbove = rule.path("yesAbove").asDouble(Double.NaN);
+    double noBelow = rule.path("noBelow").asDouble(Double.NaN);
+    if (Double.isNaN(yesAbove)) {
+      yesAbove = Double.isNaN(noBelow) ? 0.5 : noBelow;
+    }
+    if (Double.isNaN(noBelow)) {
+      noBelow = yesAbove;
+    }
+    QuestionOutcome outcome;
+    if (noul >= yesAbove) {
+      outcome = new QuestionOutcome(parseAction(rule.path("onYes").asText("ACCEPT")));
+      if (outcome.action != Action.ACCEPT) {
+        outcome.reasons
+            .add(id + ": noul " + round(noul) + " >= " + round(yesAbove) + " (yes) maps to " + outcome.action);
+      }
+    } else if (noul < noBelow) {
+      outcome = new QuestionOutcome(parseAction(rule.path("onNo").asText("ACCEPT")));
+      if (outcome.action != Action.ACCEPT) {
+        outcome.reasons.add(id + ": noul " + round(noul) + " < " + round(noBelow) + " (no) maps to " + outcome.action);
+      }
+    } else {
+      outcome = new QuestionOutcome(parseAction(rule.path("onUncertain").asText("REVIEW")));
+      if (outcome.action != Action.ACCEPT) {
+        outcome.reasons.add(id + ": noul " + round(noul) + " is between " + round(noBelow) + " and " + round(yesAbove)
+            + " (uncertain)");
+      }
     }
     return outcome;
   }

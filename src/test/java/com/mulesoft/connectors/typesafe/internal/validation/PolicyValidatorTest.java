@@ -136,11 +136,28 @@ class PolicyValidatorTest {
   }
 
   @Test
-  void shippedTicketTriageSampleIsValidAndItsRisksAreWarned() {
+  void shippedTicketTriageSampleIsValidWithNoWarnings() {
     QuestionSet set = QuestionSetLoader.load("questions/", "ticket-triage");
     ValidationResult result = validator.validate(set.policy(), set.questions());
     assertTrue(result.isValid(), result.getErrors().toString());
-    assertTrue(mentions(result.getWarnings(), "policy.urgent: a 'no' below rejectBelow"));
-    assertTrue(mentions(result.getWarnings(), "policy.sentiment: levels [0] are neither accepted nor reviewed"));
+    assertTrue(result.getWarnings().isEmpty(), result.getWarnings().toString());
+  }
+
+  @Test
+  void threeBandAndLegacyNoulMustNotMix() {
+    assertTrue(mentions(check("{\"urgent\":{\"yesAbove\":0.7,\"acceptAbove\":0.7}}").getErrors(),
+        "use either yesAbove/noBelow"));
+  }
+
+  @Test
+  void perOptionUnknownKeyIsAnError() {
+    assertTrue(mentions(check("{\"team\":{\"options\":{\"billing\":{\"minProbabilty\":0.5}}}}").getErrors(),
+        "options.billing: unknown key 'minProbabilty'"));
+  }
+
+  @Test
+  void otherOptionsMustBeAnAction() {
+    assertTrue(
+        mentions(check("{\"team\":{\"otherOptions\":\"ESCALATE\"}}").getErrors(), "otherOptions must be one of"));
   }
 }

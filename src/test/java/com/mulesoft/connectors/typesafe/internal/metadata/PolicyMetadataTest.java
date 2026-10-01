@@ -37,7 +37,9 @@ class PolicyMetadataTest {
     ObjectType policy = assertInstanceOf(ObjectType.class, new PolicyInputResolver().getStaticMetadata());
     assertTrue(policy.isOpen());
     ObjectType rule = assertInstanceOf(ObjectType.class, policy.getOpenRestriction().orElseThrow());
-    assertEquals(8, rule.getFields().size());
+    assertTrue(rule.getFieldByName("options").isPresent());
+    assertTrue(rule.getFieldByName("yesAbove").isPresent());
+    assertTrue(rule.getFieldByName("otherOptions").isPresent());
     rule.getFields().forEach(field -> assertFalse(field.isRequired(), field.getKey().getName().getLocalPart()));
   }
 

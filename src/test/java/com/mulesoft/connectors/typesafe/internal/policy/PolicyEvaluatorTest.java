@@ -138,6 +138,46 @@ class PolicyEvaluatorTest {
     assertEquals("ACCEPT", action(decision, Json.object()));
   }
 
+  @Test
+  void perOptionChoiceCanDemandHigherConfidenceOrMapToReview() {
+    String answers = "{\"team\":{\"type\":\"choice\",\"choice\":\"other\",\"confidence\":0.6,"
+        + "\"probabilities\":{\"billing\":0.2,\"other\":0.6},\"derived\":{\"margin\":0.4,\"isNoMatch\":false}}}";
+    JsonNode soft = Json.read("{\"team\":{\"minProbability\":0.55,\"options\":{\"other\":{\"action\":\"REVIEW\"}}}}");
+    assertEquals("REVIEW", action(Json.read(answers), soft));
+
+    JsonNode strict = Json.read("{\"team\":{\"minProbability\":0.55,\"options\":{\"other\":{\"minConfidence\":0.8}}}}");
+    assertEquals("REVIEW", action(Json.read(answers), strict));
+
+    JsonNode ok = Json.read("{\"team\":{\"minProbability\":0.55,\"options\":{\"other\":{\"minConfidence\":0.5}}}}");
+    assertEquals("ACCEPT", action(Json.read(answers), ok));
+  }
+
+  @Test
+  void otherOptionsAppliesWhenTheChoiceIsNotListed() {
+    String answers = "{\"team\":{\"type\":\"choice\",\"choice\":\"account\",\"confidence\":0.9,"
+        + "\"probabilities\":{\"account\":0.9},\"derived\":{\"margin\":0.9,\"isNoMatch\":false}}}";
+    JsonNode policy = Json
+        .read("{\"team\":{\"options\":{\"billing\":{\"action\":\"ACCEPT\"}},\"otherOptions\":\"REVIEW\"}}");
+    assertEquals("REVIEW", action(Json.read(answers), policy));
+  }
+
+  @Test
+  void threeBandNoulMapsYesNoAndUncertainSeparately() {
+    JsonNode policy = Json.read(
+        "{\"urgent\":{\"yesAbove\":0.7,\"noBelow\":0.3,\"onYes\":\"ACCEPT\",\"onNo\":\"ACCEPT\",\"onUncertain\":\"REVIEW\"}}");
+    assertEquals("ACCEPT", action(noul(0.9), policy));
+    assertEquals("ACCEPT", action(noul(0.1), policy));
+    assertEquals("REVIEW", action(noul(0.5), policy));
+  }
+
+  @Test
+  void threeBandNoulCanEscalateAClearYes() {
+    JsonNode policy = Json
+        .read("{\"urgent\":{\"yesAbove\":0.7,\"noBelow\":0.3,\"onYes\":\"REVIEW\",\"onNo\":\"ACCEPT\"}}");
+    assertEquals("REVIEW", action(noul(0.95), policy));
+    assertEquals("ACCEPT", action(noul(0.1), policy));
+  }
+
   private static ObjectNode noul(double value) {
     return (ObjectNode) Json.read("{\"urgent\":{\"type\":\"noul\",\"noul\":" + value + "}}");
   }

@@ -25,11 +25,19 @@
     "team": {
       "minProbability": 0.7,
       "minMargin": 0.15,
-      "onNoMatch": "REVIEW"
+      "onNoMatch": "REVIEW",
+      "options": {
+        "billing": { "minConfidence": 0.55 },
+        "technical": { "minConfidence": 0.55 },
+        "other": { "action": "REVIEW", "minConfidence": 0.7 }
+      }
     },
     "urgent": {
-      "acceptAbove": 0.7,
-      "rejectBelow": 0.3
+      "yesAbove": 0.7,
+      "noBelow": 0.3,
+      "onYes": "ACCEPT",
+      "onNo": "ACCEPT",
+      "onUncertain": "REVIEW"
     }
   }
 }

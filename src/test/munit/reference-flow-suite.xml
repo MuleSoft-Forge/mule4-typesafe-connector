@@ -33,8 +33,11 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
         <when expression="#[vars.decision.action == 'ACCEPT']">
           <set-variable variableName="branch" value="accept"/>
         </when>
-        <otherwise>
+        <when expression="#[vars.decision.action == 'REVIEW']">
           <set-variable variableName="branch" value="review"/>
+        </when>
+        <otherwise>
+          <set-variable variableName="branch" value="reject"/>
         </otherwise>
       </choice>
     </munit:execution>
@@ -47,10 +50,13 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
       <munit-tools:assert-that expression="#[vars.decision.perQuestion.team.action]"
                                is="#[MunitTools::equalTo('ACCEPT')]"
                                message="team should clear the ticket-triage thresholds"/>
-      <!-- sentiment/urgent are below threshold on mock output, so the overall action is not ACCEPT. -->
+      <!-- Mock noul 0.5 is the uncertain band; mock sentiment peaks on level 0 (Very negative) → REVIEW. -->
+      <munit-tools:assert-that expression="#[vars.decision.action]"
+                               is="#[MunitTools::equalTo('REVIEW')]"
+                               message="overall action must be REVIEW, not REJECT"/>
       <munit-tools:assert-that expression="#[vars.branch]"
                                is="#[MunitTools::equalTo('review')]"
-                               message="mock output should route to the review branch"/>
+                               message="flow must take the REVIEW branch, not lump REJECT into it"/>
       <munit-tools:assert-that expression="#[sizeOf(vars.typesafeTrace)]"
                                is="#[MunitTools::greaterThan(0)]"
                                message="the trace entry from evaluate must be captured"/>

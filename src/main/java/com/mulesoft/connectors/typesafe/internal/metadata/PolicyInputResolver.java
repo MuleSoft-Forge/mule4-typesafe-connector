@@ -20,8 +20,20 @@ public class PolicyInputResolver extends InputStaticTypeResolver {
     rule.addField().key("minConfidence").required(false).value().numberType();
     rule.addField().key("minMargin").required(false).value().numberType();
     rule.addField().key("onNoMatch").required(false).value().stringType();
+    rule.addField().key("otherOptions").required(false).value().stringType();
+    ObjectTypeBuilder option = rule.addField().key("options").required(false).value().objectType().openWith()
+        .objectType().id("typesafe-policy-option-rule");
+    option.addField().key("action").required(false).value().stringType();
+    option.addField().key("minProbability").required(false).value().numberType();
+    option.addField().key("minConfidence").required(false).value().numberType();
+    option.addField().key("minMargin").required(false).value().numberType();
     rule.addField().key("acceptAbove").required(false).value().numberType();
     rule.addField().key("rejectBelow").required(false).value().numberType();
+    rule.addField().key("yesAbove").required(false).value().numberType();
+    rule.addField().key("noBelow").required(false).value().numberType();
+    rule.addField().key("onYes").required(false).value().stringType();
+    rule.addField().key("onNo").required(false).value().stringType();
+    rule.addField().key("onUncertain").required(false).value().stringType();
     rule.addField().key("acceptLevels").required(false).value().arrayType().of().stringType();
     rule.addField().key("reviewLevels").required(false).value().arrayType().of().stringType();
     return policy.build();

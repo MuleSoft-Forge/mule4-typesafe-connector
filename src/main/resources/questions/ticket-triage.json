@@ -35,12 +35,15 @@
       "onNoMatch": "REVIEW"
     },
     "urgent": {
-      "acceptAbove": 0.7,
-      "rejectBelow": 0.3
+      "yesAbove": 0.7,
+      "noBelow": 0.3,
+      "onYes": "ACCEPT",
+      "onNo": "ACCEPT",
+      "onUncertain": "REVIEW"
     },
     "sentiment": {
       "acceptLevels": ["2", "3", "4"],
-      "reviewLevels": ["1"]
+      "reviewLevels": ["0", "1"]
     }
   }
 }

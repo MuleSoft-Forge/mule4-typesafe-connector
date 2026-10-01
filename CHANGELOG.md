@@ -13,8 +13,20 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   and `validate-question-set`. `apply-policy` now has its own error provider; the decision provider lists the
   validation errors. MUnit covers both `raiseOnReject` → `TYPESAFE:REJECTED` and an invalid policy →
   `TYPESAFE:INVALID_QUESTION_SET`.
-- **`apply-policy` DataSense.** The operation now declares its input payload, inline policy, input attributes (null),
-  output payload `{action, routeKey, reasons, perQuestion}` and output attributes (null).
+- **Sample question sets rejected routine and angry tickets.** `ticket-triage` and `support-ticket-triage` used
+  `rejectBelow` (so a clear "no" on urgency rejected the whole decision) and left "Very negative" sentiment
+  unlisted (so it rejected). They now use three-band Noul (`onNo: ACCEPT`) and put negative sentiment on
+  `reviewLevels`. The MUnit reference flow asserts `REVIEW` explicitly instead of treating `REJECT` as review.
+- **`apply-policy` and `select-candidate` DataSense.** Both declare all four message parts. `select-candidate` was
+  missing input/output resolvers and input attributes entirely.
+
+### Added
+- **Per-option Choice policy rules.** A Choice rule may set `options.<id>` with its own `action`, `minProbability`,
+  `minConfidence` and `minMargin`, plus `otherOptions` for a chosen option that is not listed — so riskier options can
+  demand higher confidence.
+- **Three-band Noul policy rules.** Prefer `yesAbove` / `noBelow` with `onYes` / `onNo` / `onUncertain` (defaults
+  `ACCEPT` / `ACCEPT` / `REVIEW`). Legacy `acceptAbove` / `rejectBelow` still works but must not be mixed with the
+  three-band form.
 
 ### Changed
 - **`apply-policy` fails closed.** It used to return `ACCEPT` whenever it had nothing to judge. Each of these is now
@@ -23,12 +35,12 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   type, and a rule whose keys do not fit its answer's type. Flows that relied on a silent `ACCEPT` now see `REVIEW`.
 - **`apply-policy` validates the policy before applying it** and raises `TYPESAFE:INVALID_QUESTION_SET` on a
   misspelt key, a rule for a question id that does not exist, keys for the wrong question type, a threshold that is
-  not a number from 0 to 1, an `onNoMatch` other than `ACCEPT`/`REVIEW`/`REJECT`, `rejectBelow` above `acceptAbove`,
-  a Score level out of range or in both lists, or a Score rule with no levels (which rejected every answer). A file
-  policy is checked against the file's questions; an inline policy is checked for structure.
+  not a number from 0 to 1, an action other than `ACCEPT`/`REVIEW`/`REJECT`, inverted Noul bounds, a Score level out
+  of range or in both lists, or a Score rule with no levels. A file policy is checked against the file's questions;
+  an inline policy is checked for structure.
 - **`validate-question-set` checks a file's `policy` block** with the same rules, as `policy.<id>` errors and
-  warnings. It warns when `rejectBelow` turns a "no" into `REJECT` for the whole decision, and when Score levels are
-  neither accepted nor reviewed. The shipped `ticket-triage.json` raises both warnings.
+  warnings. It warns when legacy `rejectBelow` turns a "no" into `REJECT` for the whole decision, and when Score
+  levels are neither accepted nor reviewed.
 
 ## [1.0.1] - 2026-09-28
 

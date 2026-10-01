@@ -17,12 +17,31 @@ public final class PolicyRules {
   public static final String NOUL = "noul";
   public static final String SCORE = "score";
 
-  /** Rule keys each question type reads. {@code minConfidence} is shared by Choice and Score. */
+  /**
+   * Rule keys each question type reads. Choice may also nest per-option thresholds under {@code options}. Noul accepts
+   * either the three-band form ({@code yesAbove}/{@code noBelow}/{@code onYes}/{@code onNo}/{@code onUncertain}) or the
+   * legacy {@code acceptAbove}/{@code rejectBelow} form.
+   */
   public static final Map<String, Set<String>> KEYS = Map.of(CHOICE,
-      Set.of("minProbability", "minConfidence", "minMargin", "onNoMatch"), NOUL, Set.of("acceptAbove", "rejectBelow"),
-      SCORE, Set.of("acceptLevels", "reviewLevels", "minConfidence"));
+      Set.of("minProbability", "minConfidence", "minMargin", "onNoMatch", "options", "otherOptions"), NOUL,
+      Set.of("acceptAbove", "rejectBelow", "yesAbove", "noBelow", "onYes", "onNo", "onUncertain"), SCORE,
+      Set.of("acceptLevels", "reviewLevels", "minConfidence"));
+
+  /** Threshold keys allowed on a Choice {@code options.<id>} entry (alongside {@code action}). */
+  public static final Set<String> OPTION_KEYS = Set.of("action", "minProbability", "minConfidence", "minMargin");
 
   private PolicyRules() {
+  }
+
+  /** True when the rule uses the three-band Noul form rather than legacy {@code acceptAbove}/{@code rejectBelow}. */
+  public static boolean isBandedNoul(JsonNode rule) {
+    return rule != null && (rule.has("yesAbove") || rule.has("noBelow") || rule.has("onYes") || rule.has("onNo")
+        || rule.has("onUncertain"));
+  }
+
+  /** True when the rule uses the legacy Noul thresholds. */
+  public static boolean isLegacyNoul(JsonNode rule) {
+    return rule != null && (rule.has("acceptAbove") || rule.has("rejectBelow"));
   }
 
   /**

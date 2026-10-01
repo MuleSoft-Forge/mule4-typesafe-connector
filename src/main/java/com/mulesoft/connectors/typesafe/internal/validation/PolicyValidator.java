@@ -26,8 +26,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class PolicyValidator {
 
   private static final Set<String> PROBABILITY_KEYS = Set.of("minProbability", "minConfidence", "minMargin",
-      "acceptAbove", "rejectBelow");
-  private static final Set<String> ACTION_KEYS = Set.of("onNoMatch");
+      "acceptAbove", "rejectBelow", "yesAbove", "noBelow");
+  private static final Set<String> ACTION_KEYS = Set.of("onNoMatch", "otherOptions", "onYes", "onNo", "onUncertain");
   private static final Set<String> LEVEL_KEYS = Set.of("acceptLevels", "reviewLevels");
   private static final Set<String> ACTIONS = Set.of(PolicyEvaluator.Action.ACCEPT.name(),
       PolicyEvaluator.Action.REVIEW.name(), PolicyEvaluator.Action.REJECT.name());
@@ -95,13 +95,12 @@ public final class PolicyValidator {
     }
 
     checkValues(prefix, rule, errors);
-    if (PolicyRules.NOUL.equals(type)) {
+    if (PolicyRules.CHOICE.equals(type)) {
+      checkChoice(prefix, rule, question, errors, warnings);
+    } else if (PolicyRules.NOUL.equals(type)) {
       checkNoul(prefix, rule, errors, warnings);
     } else if (PolicyRules.SCORE.equals(type)) {
       checkScore(prefix, rule, question, errors, warnings);
-    } else if (PolicyRules.CHOICE.equals(type) && question != null && rule.has("onNoMatch")
-        && !question.hasNonNull("noMatchOption")) {
-      warnings.add(prefix + "onNoMatch never applies; the question declares no noMatchOption");
     }
   }
 
@@ -132,7 +131,63 @@ public final class PolicyValidator {
     }
   }
 
+  private static void checkChoice(String prefix, JsonNode rule, JsonNode question, List<String> errors,
+      List<String> warnings) {
+    if (rule.has("onNoMatch") && question != null && !question.hasNonNull("noMatchOption")) {
+      warnings.add(prefix + "onNoMatch never applies; the question declares no noMatchOption");
+    }
+    JsonNode options = rule.get("options");
+    if (options == null) {
+      return;
+    }
+    if (!options.isObject()) {
+      errors.add(prefix + "options must be an object mapping option id to thresholds");
+      return;
+    }
+    Set<String> knownOptions = new HashSet<>();
+    if (question != null && question.path("criteria").isObject()) {
+      question.get("criteria").fieldNames().forEachRemaining(knownOptions::add);
+    }
+    Iterator<Map.Entry<String, JsonNode>> it = options.fields();
+    while (it.hasNext()) {
+      Map.Entry<String, JsonNode> entry = it.next();
+      String optionId = entry.getKey();
+      String optionPrefix = prefix + "options." + optionId + ": ";
+      if (!knownOptions.isEmpty() && !knownOptions.contains(optionId)) {
+        errors.add(optionPrefix + "not a criteria option on this question");
+      }
+      JsonNode optionRule = entry.getValue();
+      if (optionRule == null || !optionRule.isObject()) {
+        errors.add(optionPrefix + "must be an object");
+        continue;
+      }
+      Iterator<String> keys = optionRule.fieldNames();
+      while (keys.hasNext()) {
+        String key = keys.next();
+        if (!PolicyRules.OPTION_KEYS.contains(key)) {
+          errors.add(optionPrefix + "unknown key '" + key + "'");
+        }
+      }
+      checkValues(optionPrefix, optionRule, errors);
+    }
+  }
+
   private static void checkNoul(String prefix, JsonNode rule, List<String> errors, List<String> warnings) {
+    boolean banded = PolicyRules.isBandedNoul(rule);
+    boolean legacy = PolicyRules.isLegacyNoul(rule);
+    if (banded && legacy) {
+      errors.add(prefix + "use either yesAbove/noBelow (three-band) or acceptAbove/rejectBelow (legacy), not both");
+      return;
+    }
+    if (banded) {
+      JsonNode yesAbove = rule.get("yesAbove");
+      JsonNode noBelow = rule.get("noBelow");
+      if (yesAbove != null && noBelow != null && yesAbove.isNumber() && noBelow.isNumber()
+          && noBelow.asDouble() > yesAbove.asDouble()) {
+        errors.add(prefix + "noBelow must not be greater than yesAbove");
+      }
+      return;
+    }
     JsonNode acceptAbove = rule.get("acceptAbove");
     JsonNode rejectBelow = rule.get("rejectBelow");
     if (acceptAbove != null && rejectBelow != null && acceptAbove.isNumber() && rejectBelow.isNumber()
@@ -140,8 +195,8 @@ public final class PolicyValidator {
       errors.add(prefix + "rejectBelow must not be greater than acceptAbove");
     }
     if (rejectBelow != null) {
-      warnings.add(prefix + "a 'no' below rejectBelow rejects the whole decision; drop rejectBelow if 'no' is a "
-          + "normal answer to this question");
+      warnings.add(prefix + "a 'no' below rejectBelow rejects the whole decision; prefer yesAbove/noBelow with onNo "
+          + "ACCEPT when 'no' is a normal answer");
     }
   }
 
