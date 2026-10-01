@@ -153,15 +153,17 @@ rewrites `groupId` to the Anypoint organization id. See [`docs/exchange-publish.
 
 Never hard-code credentials — read them from a property (e.g. `${typesafe.openrouter.apiKey}`).
 
-## Demo app
+## Demo apps
 
-A complete, runnable app that exercises **every** operation over HTTP lives in
-[`demo/typesafe-dev`](demo/typesafe-dev). It includes step-by-step instructions for both **Anypoint
-Studio** and **Anypoint Code Builder**, a logged flow per operation, and an offline
-smoke-test endpoint. See [`demo/typesafe-dev/README.md`](demo/typesafe-dev/README.md).
+Two runnable Mule apps live under [`demo/`](demo) (a plain folder — not a Studio project; import each app
+from its own directory):
 
-The demo is standalone and is not wired into the connector build, so it never affects
-`mvn clean verify`.
+| App | Path | Purpose |
+| --- | --- | --- |
+| End-to-end demo | [`demo/typesafe-dev`](demo/typesafe-dev) | Exercises every operation over HTTP (Studio and ACB). See [`demo/typesafe-dev/README.md`](demo/typesafe-dev/README.md). |
+| Studio verification | [`demo/mule4-typesafe-connector-app`](demo/mule4-typesafe-connector-app) | Website / DataSense verification. See [`VERIFICATION.md`](demo/mule4-typesafe-connector-app/VERIFICATION.md). |
+
+Neither app is wired into the connector build, so they never affect `mvn clean verify`.
 
 ## Building
 

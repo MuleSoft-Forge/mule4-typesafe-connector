@@ -23,6 +23,9 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   `items[i]`, matching TypeSafe's packing pattern.
 - **Drift ignored Noul-only traffic.** Stats now treat Noul certainty (`|noul − 0.5| × 2`) like confidence and record
   yes/no/uncertain bands for distribution shift, so On Drift Detected works without Choice/Score confidence.
+- **`demo/` was accidentally a Studio project.** Local `.project` / `.classpath` made both sample apps look nested
+  inside a parent Mule project. `demo/` is now a plain scoping folder with a README; import each app from its own
+  directory.
 
 ### Added
 - **Per-option Choice policy rules.** A Choice rule may set `options.<id>` with its own `action`, `minProbability`,
