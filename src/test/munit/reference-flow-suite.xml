@@ -60,6 +60,28 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
     </munit:validation>
   </munit:test>
 
+  <!-- A misspelt policy key is caught before evaluation and surfaces as the declared typed error. -->
+  <munit:test name="apply-policy-rejects-invalid-policy" description="invalid inline policy raises TYPESAFE:INVALID_QUESTION_SET"
+              expectedErrorType="TYPESAFE:INVALID_QUESTION_SET">
+    <munit:execution>
+      <typesafe:apply-policy config-ref="TypeSafe">
+        <typesafe:decision>#[output application/json --- { answers: { urgent: { "type": "noul", noul: 0.9 } } }]</typesafe:decision>
+        <typesafe:policy>#[output application/json --- { urgent: { acceptAbov: 0.7 } }]</typesafe:policy>
+      </typesafe:apply-policy>
+    </munit:execution>
+  </munit:test>
+
+  <!-- raiseOnReject must reach an error handler as TYPESAFE:REJECTED, not as an undeclared error. -->
+  <munit:test name="apply-policy-raises-rejected" description="raiseOnReject raises TYPESAFE:REJECTED"
+              expectedErrorType="TYPESAFE:REJECTED">
+    <munit:execution>
+      <typesafe:apply-policy config-ref="TypeSafe" raiseOnReject="true">
+        <typesafe:decision>#[output application/json --- { answers: { urgent: { "type": "noul", noul: 0.1 } } }]</typesafe:decision>
+        <typesafe:policy>#[output application/json --- { urgent: { acceptAbove: 0.7, rejectBelow: 0.3 } }]</typesafe:policy>
+      </typesafe:apply-policy>
+    </munit:execution>
+  </munit:test>
+
   <!-- select-candidate (the ACCEPT branch's action in §8.8) against the mock, over an inline candidate list. -->
   <munit:test name="select-candidate-ranks-against-mock" description="[Select] Candidate runs end-to-end against mock">
     <munit:execution>

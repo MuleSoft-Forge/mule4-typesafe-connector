@@ -87,6 +87,57 @@ class PolicyEvaluatorTest {
     assertEquals("REJECT", PolicyEvaluator.evaluate(decision, policy).get("action").asText());
   }
 
+  @Test
+  void emptyDecisionIsReviewedNotAccepted() {
+    ObjectNode result = PolicyEvaluator.evaluate(Json.object(), Json.read(CHOICE_POLICY));
+    assertEquals("REVIEW", result.get("action").asText());
+    assertTrue(result.get("reasons").toString().contains("no answers to judge"));
+  }
+
+  @Test
+  void decisionWithNoAnswerObjectsIsReviewedEvenWithoutPolicy() {
+    assertEquals("REVIEW", action(Json.read("{\"foo\":\"bar\"}"), Json.object()));
+  }
+
+  @Test
+  void policiedQuestionWithoutAnAnswerIsReviewed() {
+    JsonNode policy = Json
+        .read("{\"team\":{\"minProbability\":0.55},\"urgent\":{\"acceptAbove\":0.7,\"rejectBelow\":0.3}}");
+    ObjectNode result = PolicyEvaluator.evaluate(choice(0.7, 0.5, false), policy);
+    assertEquals("REVIEW", result.get("action").asText());
+    assertEquals("ACCEPT", result.at("/perQuestion/team/action").asText());
+    assertEquals("REVIEW", result.at("/perQuestion/urgent/action").asText());
+    assertEquals("urgent: no answer to judge", result.at("/perQuestion/urgent/reasons/0").asText());
+  }
+
+  @Test
+  void shortcutAnswerJudgedAgainstAQuestionSetPolicyIsReviewed() {
+    // A single answer is judged as "result", so a file policy keyed by real question ids finds nothing to judge.
+    JsonNode decision = Json.read("{\"type\":\"noul\",\"noul\":0.9}");
+    assertEquals("REVIEW", action(decision, Json.read("{\"urgent\":{\"acceptAbove\":0.7}}")));
+  }
+
+  @Test
+  void ruleThatDoesNotFitTheAnswerTypeIsReviewed() {
+    JsonNode policy = Json.read("{\"team\":{\"acceptAbove\":0.7}}");
+    ObjectNode result = PolicyEvaluator.evaluate(choice(0.9, 0.8, false), policy);
+    assertEquals("REVIEW", result.get("action").asText());
+    assertEquals("team: rule does not fit a 'choice' answer", result.at("/perQuestion/team/reasons/0").asText());
+  }
+
+  @Test
+  void ruleWithAMisspeltKeyIsReviewed() {
+    JsonNode policy = Json.read("{\"team\":{\"minProbabilty\":0.99}}");
+    assertEquals("REVIEW", action(choice(0.9, 0.8, false), policy));
+  }
+
+  @Test
+  void answerOfUnknownTypeIsReviewedWhenARuleNamesIt() {
+    JsonNode decision = Json.read("{\"x\":{\"type\":\"rating\",\"value\":3}}");
+    assertEquals("REVIEW", action(decision, Json.read("{\"x\":{}}")));
+    assertEquals("ACCEPT", action(decision, Json.object()));
+  }
+
   private static ObjectNode noul(double value) {
     return (ObjectNode) Json.read("{\"urgent\":{\"type\":\"noul\",\"noul\":" + value + "}}");
   }

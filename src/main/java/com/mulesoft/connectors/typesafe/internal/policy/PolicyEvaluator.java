@@ -20,6 +20,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Noul {@code {acceptAbove, rejectBelow}}, Score {@code {acceptLevels, reviewLevels, minConfidence}}. The overall
  * action is the most cautious outcome across every judged question: {@code REJECT} beats {@code REVIEW} beats
  * {@code ACCEPT}.
+ *
+ * <p>
+ * The evaluator fails closed. A decision with no answers, a policied question with no answer, an answer of unknown
+ * type, and a rule whose keys do not fit the answer's type are each {@code REVIEW}, never a silent {@code ACCEPT}.
  */
 public final class PolicyEvaluator {
 
@@ -47,6 +51,7 @@ public final class PolicyEvaluator {
     List<String> reasons = new ArrayList<>();
     Action overall = Action.ACCEPT;
     String routeKey = null;
+    int judged = 0;
 
     Iterator<Map.Entry<String, JsonNode>> it = answers.fields();
     while (it.hasNext()) {
@@ -56,20 +61,35 @@ public final class PolicyEvaluator {
       if (!answer.isObject()) {
         continue;
       }
+      judged++;
       JsonNode rule = policy == null ? null : policy.get(id);
       QuestionOutcome outcome = judge(id, (ObjectNode) answer, rule);
       overall = maxSeverity(overall, outcome.action);
       reasons.addAll(outcome.reasons);
-
-      ObjectNode pq = perQuestion.putObject(id);
-      pq.put("action", outcome.action.name());
-      if (!outcome.reasons.isEmpty()) {
-        ArrayNode r = pq.putArray("reasons");
-        outcome.reasons.forEach(r::add);
-      }
+      record(perQuestion, id, outcome);
       if (routeKey == null && "choice".equals(answer.path("type").asText(""))) {
         routeKey = answer.path("choice").asText(null);
       }
+    }
+
+    if (policy != null && policy.isObject()) {
+      Iterator<String> policied = policy.fieldNames();
+      while (policied.hasNext()) {
+        String id = policied.next();
+        if (answers.path(id).isObject()) {
+          continue;
+        }
+        QuestionOutcome missing = new QuestionOutcome(Action.REVIEW);
+        missing.reasons.add(id + ": no answer to judge");
+        overall = maxSeverity(overall, missing.action);
+        reasons.addAll(missing.reasons);
+        record(perQuestion, id, missing);
+      }
+    }
+
+    if (judged == 0) {
+      overall = maxSeverity(overall, Action.REVIEW);
+      reasons.add("decision has no answers to judge");
     }
 
     ObjectNode result = Json.object();
@@ -85,14 +105,28 @@ public final class PolicyEvaluator {
     return result;
   }
 
+  private static void record(ObjectNode perQuestion, String id, QuestionOutcome outcome) {
+    ObjectNode pq = perQuestion.putObject(id);
+    pq.put("action", outcome.action.name());
+    if (!outcome.reasons.isEmpty()) {
+      ArrayNode r = pq.putArray("reasons");
+      outcome.reasons.forEach(r::add);
+    }
+  }
+
   private static QuestionOutcome judge(String id, ObjectNode answer, JsonNode rule) {
     String type = answer.path("type").asText("");
+    if (rule != null && !(rule.isObject() && PolicyRules.typesFor(rule).contains(type))) {
+      QuestionOutcome unfit = new QuestionOutcome(Action.REVIEW);
+      unfit.reasons.add(id + ": rule does not fit a '" + type + "' answer");
+      return unfit;
+    }
     switch (type) {
-      case "choice" :
+      case PolicyRules.CHOICE :
         return judgeChoice(id, answer, rule);
-      case "noul" :
+      case PolicyRules.NOUL :
         return judgeNoul(id, answer, rule);
-      case "score" :
+      case PolicyRules.SCORE :
         return judgeScore(id, answer, rule);
       default :
         return new QuestionOutcome(Action.ACCEPT);

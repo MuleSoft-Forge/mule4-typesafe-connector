@@ -5,6 +5,30 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+### Changed
+- **`apply-policy` fails closed.** It used to return `ACCEPT` whenever it had nothing to judge. Each of these is now
+  `REVIEW` with a reason: a decision with no answers (for example `{}` or the wrong variable), a policy rule whose
+  question has no answer (for example a shortcut answer judged against a question-set policy), an answer of unknown
+  type, and a rule whose keys do not fit its answer's type. Flows that relied on a silent `ACCEPT` now see `REVIEW`.
+- **`apply-policy` validates the policy before applying it** and raises `TYPESAFE:INVALID_QUESTION_SET` on a
+  misspelt key, a rule for a question id that does not exist, keys for the wrong question type, a threshold that is
+  not a number from 0 to 1, an `onNoMatch` other than `ACCEPT`/`REVIEW`/`REJECT`, `rejectBelow` above `acceptAbove`,
+  a Score level out of range or in both lists, or a Score rule with no levels (which rejected every answer). A file
+  policy is checked against the file's questions; an inline policy is checked for structure.
+- **`validate-question-set` checks a file's `policy` block** with the same rules, as `policy.<id>` errors and
+  warnings. It warns when `rejectBelow` turns a "no" into `REJECT` for the whole decision, and when Score levels are
+  neither accepted nor reviewed. The shipped `ticket-triage.json` raises both warnings.
+
+### Fixed
+- **Typed errors from `apply-policy` and the decision operations surfaced as `MULE:UNKNOWN`.** The operations threw
+  error types their `@Throws` provider did not declare, which Mule replaces with an unexpected error. `raiseOnReject`
+  and `raiseOnReview` therefore never reached a `TYPESAFE:REJECTED` / `TYPESAFE:BELOW_THRESHOLD` handler, and
+  `INVALID_QUESTION_SET`, `INVALID_STATE` and `TOO_MANY_OPTIONS` from `evaluate`, the shortcuts, `select-candidate`
+  and `validate-question-set` could not be caught by type. `apply-policy` now declares its own errors and the decision
+  provider declares the validation errors. MUnit covers both `apply-policy` errors.
+- **`apply-policy` DataSense.** The operation now declares its input payload, inline policy, input attributes (null),
+  output payload `{action, routeKey, reasons, perQuestion}` and output attributes (null).
+
 ## [1.0.1] - 2026-09-28
 
 ### Added
