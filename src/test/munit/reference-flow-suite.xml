@@ -33,8 +33,11 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
         <when expression="#[vars.decision.action == 'ACCEPT']">
           <set-variable variableName="branch" value="accept"/>
         </when>
-        <otherwise>
+        <when expression="#[vars.decision.action == 'REVIEW']">
           <set-variable variableName="branch" value="review"/>
+        </when>
+        <otherwise>
+          <set-variable variableName="branch" value="reject"/>
         </otherwise>
       </choice>
     </munit:execution>
@@ -47,10 +50,13 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
       <munit-tools:assert-that expression="#[vars.decision.perQuestion.team.action]"
                                is="#[MunitTools::equalTo('ACCEPT')]"
                                message="team should clear the ticket-triage thresholds"/>
-      <!-- sentiment/urgent are below threshold on mock output, so the overall action is not ACCEPT. -->
+      <!-- Mock noul 0.5 is the uncertain band; mock sentiment peaks on level 0 (Very negative) → REVIEW. -->
+      <munit-tools:assert-that expression="#[vars.decision.action]"
+                               is="#[MunitTools::equalTo('REVIEW')]"
+                               message="overall action must be REVIEW, not REJECT"/>
       <munit-tools:assert-that expression="#[vars.branch]"
                                is="#[MunitTools::equalTo('review')]"
-                               message="mock output should route to the review branch"/>
+                               message="flow must take the REVIEW branch, not lump REJECT into it"/>
       <munit-tools:assert-that expression="#[sizeOf(vars.typesafeTrace)]"
                                is="#[MunitTools::greaterThan(0)]"
                                message="the trace entry from evaluate must be captured"/>
@@ -58,6 +64,28 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
                                is="#[MunitTools::equalTo('triage')]"
                                message="the trace entry must record the step"/>
     </munit:validation>
+  </munit:test>
+
+  <!-- A misspelt policy key is caught before evaluation and surfaces as the declared typed error. -->
+  <munit:test name="apply-policy-rejects-invalid-policy" description="invalid inline policy raises TYPESAFE:INVALID_QUESTION_SET"
+              expectedErrorType="TYPESAFE:INVALID_QUESTION_SET">
+    <munit:execution>
+      <typesafe:apply-policy config-ref="TypeSafe">
+        <typesafe:decision>#[output application/json --- { answers: { urgent: { "type": "noul", noul: 0.9 } } }]</typesafe:decision>
+        <typesafe:policy>#[output application/json --- { urgent: { acceptAbov: 0.7 } }]</typesafe:policy>
+      </typesafe:apply-policy>
+    </munit:execution>
+  </munit:test>
+
+  <!-- raiseOnReject must reach an error handler as TYPESAFE:REJECTED, not as an undeclared error. -->
+  <munit:test name="apply-policy-raises-rejected" description="raiseOnReject raises TYPESAFE:REJECTED"
+              expectedErrorType="TYPESAFE:REJECTED">
+    <munit:execution>
+      <typesafe:apply-policy config-ref="TypeSafe" raiseOnReject="true">
+        <typesafe:decision>#[output application/json --- { answers: { urgent: { "type": "noul", noul: 0.1 } } }]</typesafe:decision>
+        <typesafe:policy>#[output application/json --- { urgent: { acceptAbove: 0.7, rejectBelow: 0.3 } }]</typesafe:policy>
+      </typesafe:apply-policy>
+    </munit:execution>
   </munit:test>
 
   <!-- select-candidate (the ACCEPT branch's action in §8.8) against the mock, over an inline candidate list. -->

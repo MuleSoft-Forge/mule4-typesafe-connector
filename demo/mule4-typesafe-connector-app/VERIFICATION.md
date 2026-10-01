@@ -2,6 +2,8 @@
 
 Harness: follow [`website/docs/connectors/mule4-typesafe-connector/`](../../../../website/docs/connectors/mule4-typesafe-connector/) line by line in Studio. One operation at a time. Defects here → PRs.
 
+Import **this** app folder into Studio — not the parent [`demo/`](../) directory (that folder only scopes the sample apps and is not a Mule project).
+
 ## Protocol
 
 1. Read the website page.

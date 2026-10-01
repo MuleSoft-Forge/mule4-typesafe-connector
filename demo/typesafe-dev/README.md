@@ -11,9 +11,11 @@ stream past in the console.
 | Route | **OpenRouter** (real LLM calls); the key is read from `local.properties` |
 | Listener | `http://localhost:8081` |
 
-> This app lives inside the connector repo under [`demo/typesafe-dev`](.). It is **not** part
-> of the connector build (the connector `pom.xml` does not include it as a module), so it
-> never affects `mvn clean verify` on the connector.
+> This app lives inside the connector repo under [`demo/typesafe-dev`](.). The parent
+> [`demo/`](../) folder is only a scope for sample apps — **not** a Studio project. Import
+> **this** folder into Studio or ACB, never the parent. It is **not** part of the connector
+> build (the connector `pom.xml` does not include it as a module), so it never affects
+> `mvn clean verify` on the connector.
 
 ---
 
