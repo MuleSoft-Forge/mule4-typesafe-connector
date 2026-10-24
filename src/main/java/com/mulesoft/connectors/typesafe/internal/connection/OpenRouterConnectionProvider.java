@@ -73,8 +73,9 @@ public class OpenRouterConnectionProvider extends AbstractRouteConnectionProvide
     if (appTitle != null && !appTitle.isBlank()) {
       headers.put("X-Title", appTitle);
     }
-    OpenRouterAdapter adapter = new OpenRouterAdapter("openrouter", baseUrl, apiVersion, model, Capabilities.full(true),
-        apiKey, headers, CostExtractor.OPENROUTER, RequestIdExtractor.OPENROUTER, transport());
+    OpenRouterAdapter adapter = new OpenRouterAdapter("openrouter", baseUrl, apiVersion, model,
+        Capabilities.full(true).withoutImages(), apiKey, headers, CostExtractor.OPENROUTER,
+        RequestIdExtractor.OPENROUTER, transport());
     return connection(adapter);
   }
 }

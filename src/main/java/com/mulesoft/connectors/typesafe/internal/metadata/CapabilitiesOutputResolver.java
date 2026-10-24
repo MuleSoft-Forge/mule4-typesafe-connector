@@ -28,6 +28,8 @@ public class CapabilitiesOutputResolver extends OutputStaticTypeResolver {
     capabilities.addField().key("supportsStructuredInstructions").value().booleanType();
     capabilities.addField().key("maxChoiceOptions").value().numberType();
     capabilities.addField().key("maxScoreLevels").value().numberType();
+    capabilities.addField().key("supportsImages").value().booleanType();
+    capabilities.addField().key("supportsBox").value().booleanType();
     return array.build();
   }
 }

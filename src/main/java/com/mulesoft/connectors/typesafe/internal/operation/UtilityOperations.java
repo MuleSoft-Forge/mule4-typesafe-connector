@@ -78,9 +78,11 @@ public class UtilityOperations {
    * <p>
    * It looks at the primary route on the connection, then each fallback, and writes one JSON object per route. route is
    * the name (openrouter, typesafe, vercel, cloudflare, compatible, mock). primary is true only for the first route.
-   * capabilities says which question types that route accepts (supportsNoul, supportsChoice, supportsScore), whether it
-   * returns confidence, whether it can list models, and the ceilings maxChoiceOptions and maxScoreLevels. Those values
-   * are fixed for the route type you picked on the connection. They are not fetched from the vendor.
+   * capabilities says which question types that route accepts (supportsNoul, supportsChoice, supportsScore,
+   * supportsBox), whether it can carry images (supportsImages), whether it returns confidence, whether it can list
+   * models, and the ceilings maxChoiceOptions and maxScoreLevels. Images and Box need a route that sends multipart
+   * System One requests: typesafe, compatible and mock do; openrouter, vercel and cloudflare do not. Those values are
+   * fixed for the route type you picked on the connection. They are not fetched from the vendor.
    * <p>
    * Use it before a billed call, to skip a question type the route cannot run. attributes.count is how many routes were
    * written.
@@ -116,6 +118,8 @@ public class UtilityOperations {
     fields.put("supportsStructuredInstructions", capabilities.isSupportsStructuredInstructions());
     fields.put("maxChoiceOptions", capabilities.getMaxChoiceOptions());
     fields.put("maxScoreLevels", capabilities.getMaxScoreLevels());
+    fields.put("supportsImages", capabilities.isSupportsImages());
+    fields.put("supportsBox", capabilities.isSupportsBox());
     return node;
   }
 
@@ -194,8 +198,8 @@ public class UtilityOperations {
    * and the connection is not read. This is a check of the question-set document, not of the route.
    * <p>
    * Supply exactly one input. Questions is the message payload: a JSON object of question id to question. Question set
-   * names a classpath file whose questions object is checked instead. Each question needs type (noul, choice, or score)
-   * and instructions. Choice options, yes/no meanings, and score levels go under criteria.
+   * names a classpath file whose questions object is checked instead. Each question needs type (noul, choice, score, or
+   * box) and instructions. Choice options, yes/no meanings, and score levels go under criteria; box takes no criteria.
    * <p>
    * The payload comes back as JSON with valid, errors, and warnings. errors are the hard limits from the TypeSafe API:
    * a choice has at most 255 options, a score has 2 to 10 levels, and options, levels, and yes/no criteria belong under

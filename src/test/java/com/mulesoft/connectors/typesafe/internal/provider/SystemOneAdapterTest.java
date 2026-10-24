@@ -5,31 +5,41 @@ import org.mule.sdk.api.exception.ModuleException;
 
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionResponse;
+import com.mulesoft.connectors.typesafe.internal.domain.ImageAsset;
 import com.mulesoft.connectors.typesafe.internal.error.TypeSafeErrorType;
 import com.mulesoft.connectors.typesafe.internal.http.HttpTransport;
 import com.mulesoft.connectors.typesafe.internal.http.ProviderHttpException;
 import com.mulesoft.connectors.typesafe.internal.http.RawHttpResponse;
+import com.mulesoft.connectors.typesafe.internal.support.TestImages;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -216,6 +226,82 @@ class SystemOneAdapterTest {
 
     assertEquals(200, page.statusCode());
     assertEquals(List.of(), page.models());
+  }
+
+  private static final String BOX_BODY = "{\"model\":\"jev-1.14.0\",\"answers\":{\"q\":{\"type\":\"box\","
+      + "\"box\":{\"top\":0.29,\"bottom\":0.69,\"left\":0.24,\"right\":0.75},\"confidence\":0.78}},"
+      + "\"usage\":{\"input_tokens\":614,\"output_tokens\":37}}";
+
+  private DecisionRequest imageRequest(byte[] png) {
+    ObjectNode questions = (ObjectNode) Json
+        .read("{\"q\":{\"type\":\"box\",\"instructions\":\"the red rectangle in `photo`\"}}");
+    return new DecisionRequest(Json.read("{\"photo\":\"ref-1\"}"), null, questions, Map.of(), null, null,
+        List.of(new ImageAsset("ref-1", png, "png")));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void sendsImagesAsMultipartWithTheImagesHeader() {
+    byte[] png = TestImages.png(320, 320);
+    ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<byte[]> body = ArgumentCaptor.forClass(byte[].class);
+    when(transport.send(eq(HttpConstants.Method.POST), eq("https://api.typesafe.ai/v1/systemone"), headers.capture(),
+        body.capture())).thenReturn(CompletableFuture.completedFuture(new RawHttpResponse(200, BOX_BODY, Map.of())));
+
+    DecisionResponse response = adapter(CostExtractor.NONE).evaluate(imageRequest(png)).join();
+
+    assertEquals(0.75, response.answers().path("q").path("box").path("right").asDouble(), 1e-9);
+    assertEquals("true", headers.getValue().get(SystemOneAdapter.IMAGES_HEADER));
+    String contentType = headers.getValue().get("Content-Type");
+    assertTrue(contentType.startsWith("multipart/form-data; boundary="));
+    String boundary = contentType.substring(contentType.indexOf('=') + 1);
+
+    String text = new String(body.getValue(), StandardCharsets.ISO_8859_1);
+    assertTrue(text.startsWith("--" + boundary + "\r\nContent-Disposition: form-data; name=\"request\"\r\n"
+        + "Content-Type: application/json\r\n\r\n"), "request must be the first part");
+    int jsonStart = text.indexOf("\r\n\r\n") + 4;
+    String json = text.substring(jsonStart, text.indexOf("\r\n--" + boundary, jsonStart));
+    JsonNode request = Json.read(json);
+    assertEquals("ref-1", request.path("state").path("photo").asText());
+    assertEquals("image", request.path("assets").path("ref-1").path("type").asText());
+    assertEquals("png", request.path("assets").path("ref-1").path("format").asText());
+    assertEquals("image-0", request.path("assets").path("ref-1").path("part").asText());
+    assertFalse(request.path("assets").path("ref-1").has("data_base64"), "bytes travel as a file part, not base64");
+
+    assertTrue(text.contains("--" + boundary + "\r\nContent-Disposition: form-data; name=\"image-0\"; "
+        + "filename=\"image-0\"\r\nContent-Type: image/png\r\n\r\n"));
+    assertTrue(text.endsWith("\r\n--" + boundary + "--\r\n"));
+    int fileStart = text.indexOf("Content-Type: image/png\r\n\r\n") + "Content-Type: image/png\r\n\r\n".length();
+    byte[] sent = Arrays.copyOfRange(body.getValue(), fileStart, fileStart + png.length);
+    assertArrayEquals(png, sent, "the image part must carry the original bytes");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void textOnlyRequestsStayJsonWithoutTheImagesHeader() {
+    ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<byte[]> body = ArgumentCaptor.forClass(byte[].class);
+    when(transport.send(any(), any(), headers.capture(), body.capture())).thenReturn(CompletableFuture
+        .completedFuture(new RawHttpResponse(200, "{\"answers\":{\"q\":{\"type\":\"noul\",\"noul\":0.9}}}", Map.of())));
+
+    adapter(CostExtractor.NONE).evaluate(request()).join();
+
+    assertEquals("application/json", headers.getValue().get("Content-Type"));
+    assertFalse(headers.getValue().containsKey(SystemOneAdapter.IMAGES_HEADER));
+    assertFalse(Json.read(new String(body.getValue(), StandardCharsets.UTF_8)).has("assets"));
+  }
+
+  @Test
+  void routeWithoutImageSupportFailsLocally() {
+    SystemOneAdapter adapter = new OpenRouterAdapter("openrouter", "https://openrouter.ai/api", "v1",
+        "~typesafe/jev-latest", Capabilities.full(true).withoutImages(), "key", Map.of(), CostExtractor.OPENROUTER,
+        RequestIdExtractor.OPENROUTER, transport);
+
+    CompletionException thrown = assertThrows(CompletionException.class,
+        () -> adapter.evaluate(imageRequest(TestImages.png(320, 320))).join());
+    ModuleException cause = assertInstanceOf(ModuleException.class, thrown.getCause());
+    assertEquals(TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER, cause.getType());
+    verifyNoInteractions(transport);
   }
 
   @Test

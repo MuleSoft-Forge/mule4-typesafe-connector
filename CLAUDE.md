@@ -37,9 +37,8 @@ Milestones **M0–M5** are complete, merged to `main`, and released through `1.0
 Anypoint Exchange publication uses Maven profile `exchange` (see
 [`docs/exchange-publish.md`](docs/exchange-publish.md)).
 Docs source of truth is `https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/`.
-Development after this release targets `1.0.3-SNAPSHOT`.
-adoption and release hardening only, with no planned new operations or public
-schema changes.
+Development after this release targets `1.0.4-SNAPSHOT`: images over multipart on the decision operations, Box
+questions and the `locate` operation (see `CHANGELOG.md` `[Unreleased]`).
 
 | Milestone | Scope | State |
 | --- | --- | --- |

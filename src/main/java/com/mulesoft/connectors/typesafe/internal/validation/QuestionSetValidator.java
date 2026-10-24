@@ -14,10 +14,10 @@ import com.fasterxml.jackson.databind.JsonNode;
  * question sets that are legal but likely to behave poorly.
  *
  * <p>
- * Hard limits (§3): non-empty {@code questions}; each has {@code type} and {@code instructions}; Choice ≤ 255 options;
- * Score 2–10 levels; options, levels and yes/no criteria live under TypeSafe's {@code criteria} field. Warnings (§8.7):
- * Choice with no no-match option, duplicate or empty option descriptions, Score with fewer than 3 levels, Choice with
- * more than 20 options.
+ * Hard limits (§3): non-empty {@code questions}; each has {@code type} (noul, choice, score or box) and
+ * {@code instructions}; Choice ≤ 255 options; Score 2–10 levels; Box takes no criteria; options, levels and yes/no
+ * criteria live under TypeSafe's {@code criteria} field. Warnings (§8.7): Choice with no no-match option, duplicate or
+ * empty option descriptions, Score with fewer than 3 levels, Choice with more than 20 options.
  */
 public final class QuestionSetValidator {
 
@@ -27,7 +27,7 @@ public final class QuestionSetValidator {
   public static final int WARN_CHOICE_OPTIONS = 20;
   public static final int RECOMMENDED_MIN_SCORE_LEVELS = 3;
 
-  private static final Set<String> TYPES = Set.of("noul", "choice", "score");
+  private static final Set<String> TYPES = Set.of("noul", "choice", "score", "box");
 
   /** Field names TypeSafe does not accept on a question; each belongs under {@code criteria}. */
   private static final List<String> NON_TYPESAFE_FIELDS = List.of("options", "levels", "legend", "criteriaTrue",
@@ -64,7 +64,7 @@ public final class QuestionSetValidator {
     JsonNode typeNode = q.get("type");
     String type = typeNode != null && typeNode.isTextual() ? typeNode.asText() : null;
     if (type == null || !TYPES.contains(type)) {
-      errors.add(id + ": type must be one of noul, choice, score");
+      errors.add(id + ": type must be one of noul, choice, score, box");
     }
 
     JsonNode instructions = q.get("instructions");
@@ -83,6 +83,8 @@ public final class QuestionSetValidator {
       validateChoice(id, q, noMatchOptions, errors, warnings);
     } else if ("score".equals(type)) {
       validateScore(id, q, errors, warnings);
+    } else if ("box".equals(type) && q.has("criteria")) {
+      errors.add(id + ": box takes no criteria; describe the target in instructions");
     }
   }
 

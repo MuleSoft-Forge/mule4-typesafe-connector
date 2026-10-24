@@ -5,9 +5,11 @@ import org.mule.sdk.api.exception.ModuleException;
 
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionResponse;
+import com.mulesoft.connectors.typesafe.internal.domain.ImageAsset;
 import com.mulesoft.connectors.typesafe.internal.engine.RetryPolicy;
 import com.mulesoft.connectors.typesafe.internal.error.TypeSafeErrorType;
 import com.mulesoft.connectors.typesafe.internal.http.HttpTransport;
+import com.mulesoft.connectors.typesafe.internal.http.MultipartBody;
 import com.mulesoft.connectors.typesafe.internal.http.ProviderHttpException;
 import com.mulesoft.connectors.typesafe.internal.http.RawHttpResponse;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
@@ -32,6 +34,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * v4 envelope.
  */
 public class SystemOneAdapter implements ProviderAdapter {
+
+  /** Opt-in header for images and Box questions, documented at https://docs.typesafe.ai/images#turning-on-images. */
+  public static final String IMAGES_HEADER = "TypeSafe-Danger-Zone-Images";
 
   private final String routeName;
   private final String baseUrl;
@@ -79,13 +84,62 @@ public class SystemOneAdapter implements ProviderAdapter {
     return capabilities;
   }
 
+  /**
+   * Sends {@code POST /{apiVersion}/systemone}. A request with images goes as {@code multipart/form-data}: the JSON
+   * first as part {@code request}, then each image as a file part that its {@code assets} entry names. A request with
+   * images or a Box question also sends {@value #IMAGES_HEADER}{@code : true}.
+   */
   @Override
   public CompletableFuture<DecisionResponse> evaluate(DecisionRequest request) {
+    if (request.usesImages() && !capabilities.isSupportsImages()) {
+      return CompletableFuture.failedFuture(new ModuleException(
+          "The " + routeName + " route cannot send images or Box questions; use the TypeSafe or a compatible route",
+          TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER));
+    }
     String model = request.requestedModel() != null ? request.requestedModel() : defaultModel;
-    byte[] body = buildBody(request, model).getBytes(StandardCharsets.UTF_8);
+    String json = buildBody(request, model);
+    Map<String, String> headers = jsonHeaders();
+    if (request.usesImages()) {
+      headers.put(IMAGES_HEADER, "true");
+    }
 
-    return transport.send(HttpConstants.Method.POST, endpoint(model), jsonHeaders(), body)
+    byte[] body;
+    if (request.images().isEmpty()) {
+      body = json.getBytes(StandardCharsets.UTF_8);
+    } else {
+      MultipartBody multipart = MultipartBody.withRequest(json);
+      List<ImageAsset> images = request.images();
+      for (int i = 0; i < images.size(); i++) {
+        multipart.file(partName(i), images.get(i).contentType(), images.get(i).bytes());
+      }
+      headers.put("Content-Type", multipart.contentType());
+      body = multipart.toBytes();
+    }
+
+    return transport.send(HttpConstants.Method.POST, endpoint(model), headers, body)
         .thenApply(response -> parse(response, model));
+  }
+
+  /** The multipart file-part name for the image at {@code index}; never {@code request}. */
+  static String partName(int index) {
+    return "image-" + index;
+  }
+
+  /**
+   * The request's {@code assets} map: each reference names its file part and format. {@code null} when there are no
+   * images, so the field is omitted.
+   */
+  protected static ObjectNode assetsNode(DecisionRequest request) {
+    if (request.images().isEmpty()) {
+      return null;
+    }
+    ObjectNode assets = Json.object();
+    List<ImageAsset> images = request.images();
+    for (int i = 0; i < images.size(); i++) {
+      ImageAsset image = images.get(i);
+      assets.putObject(image.reference()).put("type", "image").put("format", image.format()).put("part", partName(i));
+    }
+    return assets;
   }
 
   @Override
@@ -146,6 +200,10 @@ public class SystemOneAdapter implements ProviderAdapter {
     node.set("state", request.state());
     node.put("model", model);
     node.set("questions", request.questions());
+    ObjectNode assets = assetsNode(request);
+    if (assets != null) {
+      node.set("assets", assets);
+    }
     return Json.write(node);
   }
 
