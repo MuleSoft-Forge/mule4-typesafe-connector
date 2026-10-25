@@ -9,6 +9,7 @@ import com.mulesoft.connectors.typesafe.api.attributes.DecisionAttributes;
 import com.mulesoft.connectors.typesafe.api.attributes.TokenUsage;
 import com.mulesoft.connectors.typesafe.api.attributes.TraceEntry;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
+import com.mulesoft.connectors.typesafe.internal.domain.ImageAsset;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionOutcome;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
@@ -51,7 +52,8 @@ public final class DecisionCache {
   }
 
   /**
-   * The stable cache key for a request on a route: SHA-256 of route + model + canonical(state) + canonical(questions).
+   * The stable cache key for a request on a route: SHA-256 of route + model + canonical(state) + canonical(questions),
+   * plus each image's reference and content hash when the request carries images.
    */
   public String keyFor(String route, String model, DecisionRequest request) {
     ObjectNode key = Json.object();
@@ -63,6 +65,12 @@ public final class DecisionCache {
       key.set("state", request.state());
     }
     key.set("questions", request.questions());
+    if (!request.images().isEmpty()) {
+      ObjectNode images = key.putObject("images");
+      for (ImageAsset image : request.images()) {
+        images.put(image.reference(), image.sha256());
+      }
+    }
     return Json.sha256(key);
   }
 

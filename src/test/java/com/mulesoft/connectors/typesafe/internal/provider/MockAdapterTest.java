@@ -31,6 +31,16 @@ class MockAdapterTest {
   }
 
   @Test
+  void synthesisesBoxAnswerInTypeSafeShape() {
+    DecisionResponse response = evaluate("{\"q\":{\"type\":\"box\",\"instructions\":\"the mug\"}}", 0.5);
+    ObjectNode answer = (ObjectNode) response.answers().get("q");
+    assertEquals("box", answer.get("type").asText());
+    assertEquals(0.25, answer.get("box").get("top").asDouble(), 1e-9);
+    assertEquals(0.75, answer.get("box").get("right").asDouble(), 1e-9);
+    assertTrue(answer.has("confidence"));
+  }
+
+  @Test
   void synthesisesChoiceAnswerWithDistribution() {
     DecisionResponse response = evaluate("{\"q\":{\"type\":\"choice\",\"criteria\":{\"a\":\"A\",\"b\":\"B\"}}}", 0.5);
     ObjectNode answer = (ObjectNode) response.answers().get("q");

@@ -24,7 +24,7 @@ is the default model. Jev is a *decision* model
 (not a chat model): given a **state** plus named, typed **questions** (Noul /
 Choice / Score) it returns one typed **answer** per question.
 
-- Coordinates: `com.mulesoftforge:mule4-typesafe-connector:1.0.2`
+- Coordinates: `com.mulesoftforge:mule4-typesafe-connector:1.0.3`
 - Packaging: `mule-extension` · XML prefix `typesafe` · namespace
   `http://www.mulesoft.org/schema/mule/typesafe`
 - Parent: `org.mule.extensions:mule-java-extension-parent:1.12.3`
@@ -33,13 +33,12 @@ Choice / Score) it returns one typed **answer** per question.
 
 ## Current status (2026-09-28)
 
-Milestones **M0–M5** are complete, merged to `main`, and released through `1.0.2` on GitHub (and Maven Central when published).
+Milestones **M0–M5** are complete, merged to `main`, and released through `1.0.3` on GitHub (and Maven Central when published).
 Anypoint Exchange publication uses Maven profile `exchange` (see
 [`docs/exchange-publish.md`](docs/exchange-publish.md)).
 Docs source of truth is `https://docs.mulesoftforge.com/connectors/mule4-typesafe-connector/`.
-Development after this release targets `1.0.3-SNAPSHOT`.
-adoption and release hardening only, with no planned new operations or public
-schema changes.
+Images, Box, Locate, and the embedded playground shipped in `1.0.3`. Development after this release targets
+`1.0.4-SNAPSHOT`.
 
 | Milestone | Scope | State |
 | --- | --- | --- |

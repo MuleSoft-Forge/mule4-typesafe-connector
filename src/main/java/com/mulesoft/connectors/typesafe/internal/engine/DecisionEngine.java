@@ -46,12 +46,27 @@ public final class DecisionEngine {
     this.delayScheduler = delayScheduler;
   }
 
-  /** Evaluates the request against the primary route, failing over to the fallbacks on connectivity-class errors. */
+  /**
+   * Evaluates the request against the primary route, failing over to the fallbacks on connectivity-class errors. A
+   * request with images or a Box question needs a primary route that supports images, and fails over only to fallbacks
+   * that do.
+   */
   public CompletableFuture<DecisionOutcome> evaluate(TypeSafeConnection connection, DecisionRequest request,
       DecisionContext context) {
+    ProviderAdapter primary = connection.primary();
+    if (request.usesImages() && !primary.capabilities().isSupportsImages()) {
+      return CompletableFuture.failedFuture(new ModuleException(
+          "The " + primary.routeName()
+              + " route cannot send images or Box questions; connect with the TypeSafe or a compatible route",
+          TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER));
+    }
     List<ProviderAdapter> route = new ArrayList<>();
-    route.add(connection.primary());
-    route.addAll(connection.fallbacks());
+    route.add(primary);
+    for (ProviderAdapter fallback : connection.fallbacks()) {
+      if (!request.usesImages() || fallback.capabilities().isSupportsImages()) {
+        route.add(fallback);
+      }
+    }
     return runRoute(route, 0, request, context, System.nanoTime(), new ArrayList<>());
   }
 

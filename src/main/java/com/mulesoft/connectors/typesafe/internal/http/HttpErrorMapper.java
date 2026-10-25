@@ -31,8 +31,11 @@ public final class HttpErrorMapper {
       case 429 :
         return TypeSafeErrorType.RATE_LIMITED;
       case 400 :
+      case 415 :
       case 422 :
         return TypeSafeErrorType.PROVIDER_VALIDATION;
+      case 413 :
+        return TypeSafeErrorType.REQUEST_TOO_LARGE;
       case 503 :
       case 529 :
         return TypeSafeErrorType.OVERLOADED;

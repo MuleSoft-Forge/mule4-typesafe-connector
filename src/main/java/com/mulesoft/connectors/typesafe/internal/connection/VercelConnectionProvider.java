@@ -49,8 +49,9 @@ public class VercelConnectionProvider extends AbstractRouteConnectionProvider {
 
   @Override
   public TypeSafeConnection connect() {
-    SystemOneAdapter adapter = new SystemOneAdapter("vercel", baseUrl, apiVersion, model, Capabilities.full(true),
-        apiKey, customHeaders(), CostExtractor.VERCEL, RequestIdExtractor.VERCEL_GENERATION_ID, transport());
+    SystemOneAdapter adapter = new SystemOneAdapter("vercel", baseUrl, apiVersion, model,
+        Capabilities.full(true).withoutImages(), apiKey, customHeaders(), CostExtractor.VERCEL,
+        RequestIdExtractor.VERCEL_GENERATION_ID, transport());
     return connection(adapter);
   }
 }

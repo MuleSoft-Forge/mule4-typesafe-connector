@@ -16,9 +16,10 @@ public class DecisionErrorTypeProvider implements ErrorTypeProvider {
   @SuppressWarnings("rawtypes")
   public Set<ErrorTypeDefinition> getErrorTypes() {
     return Set.of(TypeSafeErrorType.INVALID_QUESTION_SET, TypeSafeErrorType.INVALID_STATE,
-        TypeSafeErrorType.TOO_MANY_OPTIONS, TypeSafeErrorType.UNAUTHORIZED, TypeSafeErrorType.RATE_LIMITED,
-        TypeSafeErrorType.OVERLOADED, TypeSafeErrorType.TIMEOUT, TypeSafeErrorType.CONNECTIVITY,
-        TypeSafeErrorType.PROVIDER_VALIDATION, TypeSafeErrorType.PROVIDER_ERROR, TypeSafeErrorType.INVALID_RESPONSE,
-        TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER, TypeSafeErrorType.BUDGET_EXCEEDED);
+        TypeSafeErrorType.INVALID_IMAGE, TypeSafeErrorType.REQUEST_TOO_LARGE, TypeSafeErrorType.TOO_MANY_OPTIONS,
+        TypeSafeErrorType.UNAUTHORIZED, TypeSafeErrorType.RATE_LIMITED, TypeSafeErrorType.OVERLOADED,
+        TypeSafeErrorType.TIMEOUT, TypeSafeErrorType.CONNECTIVITY, TypeSafeErrorType.PROVIDER_VALIDATION,
+        TypeSafeErrorType.PROVIDER_ERROR, TypeSafeErrorType.INVALID_RESPONSE, TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER,
+        TypeSafeErrorType.BUDGET_EXCEEDED);
   }
 }

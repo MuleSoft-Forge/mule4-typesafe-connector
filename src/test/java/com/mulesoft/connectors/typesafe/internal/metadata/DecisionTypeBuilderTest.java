@@ -8,6 +8,7 @@ import org.mule.metadata.api.model.StringType;
 
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +54,36 @@ class DecisionTypeBuilderTest {
     ObjectType moodDerived = object(field(mood, "derived"));
     assertInstanceOf(NumberType.class, field(moodDerived, "level"));
     assertInstanceOf(StringType.class, field(moodDerived, "levelLabel"));
+  }
+
+  /** A Box answer as returned live by POST /v1/systemone (jev-1.14.0), plus the connector's derived block. */
+  private static final String LIVE_BOX_ANSWER = "{\"type\":\"box\",\"box\":{\"top\":0.29,\"bottom\":0.69,"
+      + "\"left\":0.24,\"right\":0.75},\"confidence\":0.78,"
+      + "\"derived\":{\"width\":0.51,\"height\":0.4,\"centerX\":0.495,\"centerY\":0.49,\"area\":0.204}}";
+
+  @Test
+  void boxQuestionTypesEveryFieldOfTheLiveAnswer() {
+    ObjectNode questions = (ObjectNode) Json.read("{\"where\":{\"type\":\"box\"}}");
+    ObjectType answers = object(field(object(DecisionTypeBuilder.decisionOutput(questions)), "answers"));
+    assertCovers(object(field(answers, "where")), Json.read(LIVE_BOX_ANSWER));
+  }
+
+  @Test
+  void locateOutputTypesEveryFieldOfTheLiveAnswer() {
+    assertCovers(object(new BoxAnswerOutputResolver().getStaticMetadata()), Json.read(LIVE_BOX_ANSWER));
+  }
+
+  private static void assertCovers(ObjectType type, JsonNode sample) {
+    sample.fields().forEachRemaining(entry -> {
+      MetadataType fieldType = field(type, entry.getKey());
+      if (entry.getValue().isObject()) {
+        assertCovers(object(fieldType), entry.getValue());
+      } else if (entry.getValue().isNumber()) {
+        assertInstanceOf(NumberType.class, fieldType, entry.getKey());
+      } else if (entry.getValue().isTextual()) {
+        assertInstanceOf(StringType.class, fieldType, entry.getKey());
+      }
+    });
   }
 
   @Test

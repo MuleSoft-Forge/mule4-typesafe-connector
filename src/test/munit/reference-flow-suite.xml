@@ -112,4 +112,51 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
     </munit:validation>
   </munit:test>
 
+  <!-- Images: a gateway route that cannot carry multipart images. Never connects; the check is local. -->
+  <typesafe:config name="TypeSafe_OpenRouter">
+    <typesafe:openrouter-connection apiKey="not-a-real-key"/>
+  </typesafe:config>
+
+  <!-- [Decide] Locate binds the images map (reference → binary), validates it locally and returns a typed box. -->
+  <munit:test name="locate-returns-box-against-mock" description="[Decide] Locate runs end-to-end against mock">
+    <munit:execution>
+      <typesafe:locate config-ref="TypeSafe" instructions="the red rectangle in `photo`">
+        <typesafe:state>#[output application/json --- { photo: "6f1d2c0a-photo" }]</typesafe:state>
+        <typesafe:images>#[{ "6f1d2c0a-photo": readUrl('classpath://images/red-rectangle.png', 'application/octet-stream') }]</typesafe:images>
+      </typesafe:locate>
+    </munit:execution>
+    <munit:validation>
+      <munit-tools:assert-that expression="#[payload.'type']" is="#[MunitTools::equalTo('box')]"
+                               message="locate must return a box answer"/>
+      <munit-tools:assert-that expression="#[payload.box.top == 0.25 and payload.box.right == 0.75]"
+                               is="#[MunitTools::equalTo(true)]"
+                               message="mock box edges"/>
+      <munit-tools:assert-that expression="#[payload.derived.area == 0.25 and payload.derived.centerX == 0.5]"
+                               is="#[MunitTools::equalTo(true)]"
+                               message="derived geometry from the box edges"/>
+    </munit:validation>
+  </munit:test>
+
+  <!-- An image no string refers to would be a 400 from TypeSafe; it fails locally as TYPESAFE:INVALID_IMAGE. -->
+  <munit:test name="ask-noul-rejects-unreferenced-image" description="unreferenced image raises TYPESAFE:INVALID_IMAGE"
+              expectedErrorType="TYPESAFE:INVALID_IMAGE">
+    <munit:execution>
+      <typesafe:ask-noul config-ref="TypeSafe" instructions="Is there a person at the door?">
+        <typesafe:state>#[output application/json --- { door: "no reference here" }]</typesafe:state>
+        <typesafe:images>#[{ "6f1d2c0a-photo": readUrl('classpath://images/red-rectangle.png', 'application/octet-stream') }]</typesafe:images>
+      </typesafe:ask-noul>
+    </munit:execution>
+  </munit:test>
+
+  <!-- OpenRouter degrades images silently, so the connector refuses them before any call or budget reservation. -->
+  <munit:test name="locate-on-openrouter-is-unsupported" description="images on OpenRouter raise TYPESAFE:UNSUPPORTED_BY_PROVIDER"
+              expectedErrorType="TYPESAFE:UNSUPPORTED_BY_PROVIDER">
+    <munit:execution>
+      <typesafe:locate config-ref="TypeSafe_OpenRouter" instructions="the red rectangle in `photo`">
+        <typesafe:state>#[output application/json --- { photo: "6f1d2c0a-photo" }]</typesafe:state>
+        <typesafe:images>#[{ "6f1d2c0a-photo": readUrl('classpath://images/red-rectangle.png', 'application/octet-stream') }]</typesafe:images>
+      </typesafe:locate>
+    </munit:execution>
+  </munit:test>
+
 </mule>

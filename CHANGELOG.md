@@ -5,6 +5,39 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-10-25
+
+### Added
+- **Images.** `evaluate`, `ask-noul`, `choose`, `score`, `select-candidate` and the new `locate` take an optional
+  **Images** map: reference string → PNG or JPEG binary (`#[{ (vars.photoRef): vars.photo }]`). Write each reference
+  into the state, instructions or criteria. Images travel as `multipart/form-data` on `POST /{apiVersion}/systemone`
+  (a `request` JSON part plus one file part per image) with `TypeSafe-Danger-Zone-Images: true`. Base64 text, with or
+  without a `data:` prefix, is decoded first. See <https://docs.typesafe.ai/images>.
+- **Local image validation → `TYPESAFE:INVALID_IMAGE`.** Format (PNG/JPEG, no animated PNG), 16 MiB per image and
+  32 MiB total, 280–1568 px per side, 78,400–2,458,624 pixels, reference length limits, and every image referenced
+  somewhere in a string. Checked before cache, budget or any HTTP call.
+- **Box questions and `[Decide] Locate`.** Question sets accept `type: box` (instructions only, no criteria). The
+  answer is `box {top, bottom, left, right}` in 0–1 image coordinates, a nullable `confidence`, and
+  `derived {width, height, centerX, centerY, area}`. Needs Jev 1.14 or later. See
+  <https://docs.typesafe.ai/primitives/box>.
+- **`supportsImages` / `supportsBox` capabilities.** Reported by `get-capabilities`. True on `typesafe`, `compatible`
+  and `mock`; false on OpenRouter, Vercel and Cloudflare. Those gateways do not pass multipart images through, so an
+  image or Box request on them raises `TYPESAFE:UNSUPPORTED_BY_PROVIDER` up front, and fallbacks without image
+  support are skipped for image requests.
+- **`TYPESAFE:REQUEST_TOO_LARGE`** for HTTP 413.
+- The decision cache key includes each image's SHA-256, so the same text with a different photo is a cache miss.
+- **Embedded playground** in `demo/mule4-typesafe-connector-app` (`GET /playground`). Serves a TypeSafe-style UI
+  that calls Evaluate, Ask Yes/No, Choose, Score, Locate, Validate, Apply Policy, List Models, and Get Capabilities
+  through the connector, with integration-first examples and image / Locate demos.
+
+### Changed
+- HTTP 415 (unsupported `Content-Encoding`) maps to `TYPESAFE:PROVIDER_VALIDATION`.
+- Score `legend` values are typed as any JSON value, not only strings, because TypeSafe now allows objects and
+  arrays there (as in criteria).
+
+### Not supported
+- Images on `evaluate-batch` and `filter`.
+
 ## [1.0.2] - 2026-10-01
 
 ### Fixed

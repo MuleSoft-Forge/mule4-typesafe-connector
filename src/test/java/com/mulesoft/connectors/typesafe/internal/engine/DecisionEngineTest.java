@@ -6,9 +6,12 @@ import com.mulesoft.connectors.typesafe.api.attributes.DecisionAttributes;
 import com.mulesoft.connectors.typesafe.internal.connection.TypeSafeConnection;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionResponse;
+import com.mulesoft.connectors.typesafe.internal.domain.ImageAsset;
 import com.mulesoft.connectors.typesafe.internal.error.TypeSafeErrorType;
 import com.mulesoft.connectors.typesafe.internal.http.ProviderHttpException;
+import com.mulesoft.connectors.typesafe.internal.provider.Capabilities;
 import com.mulesoft.connectors.typesafe.internal.provider.ProviderAdapter;
+import com.mulesoft.connectors.typesafe.internal.support.TestImages;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
 import java.math.BigDecimal;
@@ -28,6 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -161,6 +166,46 @@ class DecisionEngineTest {
     ModuleException cause = assertInstanceOf(ModuleException.class, thrown.getCause());
     assertEquals(TypeSafeErrorType.UNAUTHORIZED, cause.getType());
     verifyNoInteractions(fallback);
+  }
+
+  private DecisionRequest boxRequest() {
+    ObjectNode questions = (ObjectNode) Json.read("{\"q\":{\"type\":\"box\",\"instructions\":\"the mug in `p`\"}}");
+    return new DecisionRequest(Json.read("{\"p\":\"ref\"}"), null, questions, Map.of(), null, null,
+        List.of(new ImageAsset("ref", TestImages.png(300, 300), "png")));
+  }
+
+  @Test
+  void imageRequestOnARouteWithoutImagesFailsBeforeAnyCall() {
+    ProviderAdapter primary = mock(ProviderAdapter.class);
+    when(primary.routeName()).thenReturn("openrouter");
+    when(primary.capabilities()).thenReturn(Capabilities.full(true).withoutImages());
+
+    CompletionException thrown = assertThrows(CompletionException.class, () -> engine
+        .evaluate(new TypeSafeConnection(primary, List.of()), boxRequest(), new DecisionContext(null, false)).join());
+    ModuleException cause = assertInstanceOf(ModuleException.class, thrown.getCause());
+    assertEquals(TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER, cause.getType());
+  }
+
+  @Test
+  void imageRequestSkipsFallbacksWithoutImages() {
+    ProviderAdapter primary = mock(ProviderAdapter.class);
+    when(primary.routeName()).thenReturn("typesafe");
+    when(primary.capabilities()).thenReturn(Capabilities.full(true));
+    when(primary.evaluate(any()))
+        .thenReturn(CompletableFuture.failedFuture(new ProviderHttpException(529, "busy", OptionalLong.empty())));
+    ProviderAdapter openrouter = mock(ProviderAdapter.class);
+    when(openrouter.capabilities()).thenReturn(Capabilities.full(true).withoutImages());
+    ProviderAdapter compatible = mock(ProviderAdapter.class);
+    when(compatible.routeName()).thenReturn("compatible");
+    when(compatible.capabilities()).thenReturn(Capabilities.full(false));
+    when(compatible.evaluate(any())).thenReturn(CompletableFuture.completedFuture(choiceResponse(null, 10)));
+
+    DecisionOutcome outcome = engine.evaluate(new TypeSafeConnection(primary, List.of(openrouter, compatible)),
+        boxRequest(), new DecisionContext(null, false)).join();
+
+    assertEquals("compatible", outcome.attributes().getProvider());
+    assertEquals(List.of("typesafe"), outcome.attributes().getFailedOverFrom());
+    verify(openrouter, never()).evaluate(any());
   }
 
   @Test

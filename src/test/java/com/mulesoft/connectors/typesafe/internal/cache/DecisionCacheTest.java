@@ -2,10 +2,13 @@ package com.mulesoft.connectors.typesafe.internal.cache;
 
 import com.mulesoft.connectors.typesafe.api.attributes.DecisionAttributes;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
+import com.mulesoft.connectors.typesafe.internal.domain.ImageAsset;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionOutcome;
 import com.mulesoft.connectors.typesafe.internal.support.InMemoryObjectStore;
+import com.mulesoft.connectors.typesafe.internal.support.TestImages;
 import com.mulesoft.connectors.typesafe.internal.util.Json;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,6 +35,19 @@ class DecisionCacheTest {
     assertNotEquals(cache.keyFor("openrouter", "m1", a), cache.keyFor("openrouter", "m2", a));
     assertNotEquals(cache.keyFor("openrouter", "m1", a),
         cache.keyFor("openrouter", "m1", request("{\"a\":9}", "{\"q\":{\"type\":\"noul\"}}")));
+  }
+
+  @Test
+  void keyChangesWhenTheImageBehindAReferenceChanges() {
+    ObjectNode questions = (ObjectNode) Json.read("{\"q\":{\"type\":\"noul\"}}");
+    DecisionRequest first = new DecisionRequest(Json.read("{\"p\":\"ref\"}"), null, questions, Map.of(), null, null,
+        List.of(new ImageAsset("ref", TestImages.png(300, 300), "png")));
+    DecisionRequest second = new DecisionRequest(Json.read("{\"p\":\"ref\"}"), null, questions, Map.of(), null, null,
+        List.of(new ImageAsset("ref", TestImages.png(400, 400), "png")));
+    DecisionRequest textOnly = request("{\"p\":\"ref\"}", "{\"q\":{\"type\":\"noul\"}}");
+
+    assertNotEquals(cache.keyFor("typesafe", "m", first), cache.keyFor("typesafe", "m", second));
+    assertNotEquals(cache.keyFor("typesafe", "m", first), cache.keyFor("typesafe", "m", textOnly));
   }
 
   @Test

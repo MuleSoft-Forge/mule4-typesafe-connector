@@ -16,9 +16,10 @@ public class BatchErrorTypeProvider implements ErrorTypeProvider {
   @SuppressWarnings("rawtypes")
   public Set<ErrorTypeDefinition> getErrorTypes() {
     return Set.of(TypeSafeErrorType.BATCH_TOO_LARGE, TypeSafeErrorType.INVALID_QUESTION_SET,
-        TypeSafeErrorType.INVALID_STATE, TypeSafeErrorType.BUDGET_EXCEEDED, TypeSafeErrorType.UNAUTHORIZED,
-        TypeSafeErrorType.RATE_LIMITED, TypeSafeErrorType.OVERLOADED, TypeSafeErrorType.TIMEOUT,
-        TypeSafeErrorType.CONNECTIVITY, TypeSafeErrorType.PROVIDER_VALIDATION, TypeSafeErrorType.PROVIDER_ERROR,
-        TypeSafeErrorType.INVALID_RESPONSE, TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER);
+        TypeSafeErrorType.INVALID_STATE, TypeSafeErrorType.REQUEST_TOO_LARGE, TypeSafeErrorType.BUDGET_EXCEEDED,
+        TypeSafeErrorType.UNAUTHORIZED, TypeSafeErrorType.RATE_LIMITED, TypeSafeErrorType.OVERLOADED,
+        TypeSafeErrorType.TIMEOUT, TypeSafeErrorType.CONNECTIVITY, TypeSafeErrorType.PROVIDER_VALIDATION,
+        TypeSafeErrorType.PROVIDER_ERROR, TypeSafeErrorType.INVALID_RESPONSE,
+        TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER);
   }
 }

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * <ul>
  * <li>Choice: {@code margin} (top probability minus runner-up), {@code runnerUp}, {@code isNoMatch}.
  * <li>Score: {@code level} (the most probable level, not {@code round(score)}), {@code levelLabel}.
+ * <li>Box: {@code width}, {@code height}, {@code centerX}, {@code centerY}, {@code area}, all fractions of the image.
  * <li>Noul: nothing derived.
  * </ul>
  */
@@ -39,8 +40,41 @@ public final class DerivedComputer {
         enrichChoice(entry.getKey(), obj, noMatchOptions);
       } else if ("score".equals(type)) {
         enrichScore(obj);
+      } else if ("box".equals(type)) {
+        enrichBox(obj);
       }
     }
+  }
+
+  /**
+   * Box geometry as fractions of the image, so a flow can test "is it in the left half" or "is it big enough" without
+   * arithmetic. Omitted when the provider did not return all four edges.
+   */
+  private static void enrichBox(ObjectNode answer) {
+    JsonNode box = answer.path("box");
+    if (!box.path("top").isNumber() || !box.path("bottom").isNumber() || !box.path("left").isNumber()
+        || !box.path("right").isNumber()) {
+      return;
+    }
+    double top = box.get("top").asDouble();
+    double bottom = box.get("bottom").asDouble();
+    double left = box.get("left").asDouble();
+    double right = box.get("right").asDouble();
+    double width = Math.max(0.0, right - left);
+    double height = Math.max(0.0, bottom - top);
+    ObjectNode derived = answer.putObject("derived");
+    derived.put("width", round(width));
+    derived.put("height", round(height));
+    derived.put("centerX", round((left + right) / 2.0));
+    derived.put("centerY", round((top + bottom) / 2.0));
+    derived.put("area", round(width * height));
+  }
+
+  /**
+   * Six decimals keeps sub-pixel precision for images up to 1568 px while hiding float noise like 0.39999999999999997.
+   */
+  private static double round(double value) {
+    return Math.round(value * 1_000_000d) / 1_000_000d;
   }
 
   private static void enrichChoice(String questionId, ObjectNode answer, Map<String, String> noMatchOptions) {

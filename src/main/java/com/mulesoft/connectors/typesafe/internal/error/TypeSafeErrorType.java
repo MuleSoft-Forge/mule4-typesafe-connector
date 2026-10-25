@@ -32,6 +32,10 @@ public enum TypeSafeErrorType implements ErrorTypeDefinition<TypeSafeErrorType> 
   TOO_MANY_OPTIONS(MuleErrors.VALIDATION),
   /** Binary or empty state. */
   INVALID_STATE(MuleErrors.VALIDATION),
+  /** An image is not PNG/JPEG, is outside the size limits, or is not referenced; no billed call was made. */
+  INVALID_IMAGE(MuleErrors.VALIDATION),
+  /** 413: the request body, an image, or the expanded request is over a TypeSafe size limit. */
+  REQUEST_TOO_LARGE(MuleErrors.VALIDATION),
   /** {@code items} exceeds {@code maxItems}. */
   BATCH_TOO_LARGE(MuleErrors.VALIDATION),
   /** Unparseable body, missing answer id, or wrong answer type. */

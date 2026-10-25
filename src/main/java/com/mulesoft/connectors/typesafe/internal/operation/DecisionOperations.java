@@ -12,6 +12,7 @@ import org.mule.sdk.api.annotation.param.MediaType;
 import org.mule.sdk.api.annotation.param.Optional;
 import org.mule.sdk.api.annotation.param.ParameterGroup;
 import org.mule.sdk.api.annotation.param.display.DisplayName;
+import org.mule.sdk.api.annotation.param.display.Summary;
 import org.mule.sdk.api.annotation.values.OfValues;
 import org.mule.sdk.api.exception.ModuleException;
 import org.mule.sdk.api.runtime.operation.Result;
@@ -22,15 +23,18 @@ import com.mulesoft.connectors.typesafe.internal.cache.DecisionCache;
 import com.mulesoft.connectors.typesafe.internal.config.TypeSafeConfiguration;
 import com.mulesoft.connectors.typesafe.internal.connection.TypeSafeConnection;
 import com.mulesoft.connectors.typesafe.internal.domain.DecisionRequest;
+import com.mulesoft.connectors.typesafe.internal.domain.ImageAsset;
 import com.mulesoft.connectors.typesafe.internal.engine.BudgetGuard;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionContext;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionEngine;
 import com.mulesoft.connectors.typesafe.internal.engine.DecisionOutcome;
 import com.mulesoft.connectors.typesafe.internal.error.DecisionErrorTypeProvider;
 import com.mulesoft.connectors.typesafe.internal.error.TypeSafeErrorType;
+import com.mulesoft.connectors.typesafe.internal.metadata.BoxAnswerOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.ChoiceAnswerOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.DecisionAttributesResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.DecisionOutputResolver;
+import com.mulesoft.connectors.typesafe.internal.metadata.ImagesInputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.JsonInputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.NoulAnswerOutputResolver;
 import com.mulesoft.connectors.typesafe.internal.metadata.NullInputAttributesResolver;
@@ -73,14 +77,23 @@ public class DecisionOperations {
   private static final String CANDIDATE_NO_MATCH = "__no_match__";
   private static final int MAX_CANDIDATES = 254;
 
+  static final String IMAGES_SUMMARY = "Reference to PNG/JPEG binary, e.g. #[{ (vars.photoRef): vars.photo }]. "
+      + "Write each reference into the state, instructions or criteria. Sent as multipart.";
+
   /**
    * Evaluates one decision against the connected route. Supply the questions inline ({@code questions}) or by
    * referencing a classpath question-set file ({@code questionSet}); exactly one is required. The output is the answers
    * object (each answer enriched with a {@code derived} block); {@code attributes} carry provider, usage, cost, timing
-   * and a {@code traceEntry}.
+   * and a {@code traceEntry}. Questions may be noul, choice, score or box.
    * <p>
    * Hosted System One routes call {@code POST /{apiVersion}/systemone}. See
    * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
+   * <p>
+   * Images (experimental): write a reference string into the state, instructions or criteria and map it to a PNG or
+   * JPEG binary under Images. The call becomes a multipart {@code POST /{apiVersion}/systemone} (JSON in part
+   * {@code request}, one file part per image) with {@code TypeSafe-Danger-Zone-Images: true}; a box question sends the
+   * same header. Only the typesafe, compatible and mock routes carry images. See
+   * <a href="https://docs.typesafe.ai/images">https://docs.typesafe.ai/images</a>.
    */
   @Alias("evaluate")
   @DisplayName("[Decide] Evaluate")
@@ -92,6 +105,7 @@ public class DecisionOperations {
       @Optional @Content(primary = false) @TypeResolver(QuestionsInputResolver.class) @DisplayName("Questions") InputStream questions,
       @Optional @DisplayName("Question set") @MetadataKeyId @OfValues(QuestionSetValueProvider.class) String questionSet,
       @Optional String questionSetId, @Optional String questionSetVersion,
+      @Optional @Content(primary = false) @TypeResolver(ImagesInputResolver.class) @DisplayName("Images") @Summary(IMAGES_SUMMARY) Map<String, InputStream> images,
       @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
@@ -101,7 +115,7 @@ public class DecisionOperations {
       QuestionResolution.Resolved resolved = QuestionResolution.resolve(config, questions, questionSet, questionSetId,
           questionSetVersion);
       request = new DecisionRequest(stateNode, options.getModelOverride(), resolved.questions, resolved.noMatchOptions,
-          resolved.questionSetId, resolved.questionSetVersion);
+          resolved.questionSetId, resolved.questionSetVersion, ImageInputs.read(images));
     } catch (ModuleException e) {
       callback.error(e);
       return;
@@ -131,6 +145,11 @@ public class DecisionOperations {
    * <p>
    * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
    * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
+   * <p>
+   * Images (experimental): map references used in the state, instructions or criteria to PNG/JPEG binaries under
+   * Images, and the call becomes a multipart {@code POST /{apiVersion}/systemone} with
+   * {@code TypeSafe-Danger-Zone-Images: true}. Typesafe, compatible and mock routes only. See
+   * <a href="https://docs.typesafe.ai/images">https://docs.typesafe.ai/images</a>.
    */
   @Alias("ask-noul")
   @DisplayName("[Decide] Ask Yes/No")
@@ -140,6 +159,7 @@ public class DecisionOperations {
   public void askNoul(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
       @Content @TypeResolver(JsonInputResolver.class) InputStream state,
       @DisplayName("Instructions") String instructions, @Optional String criteriaTrue, @Optional String criteriaFalse,
+      @Optional @Content(primary = false) @TypeResolver(ImagesInputResolver.class) @DisplayName("Images") @Summary(IMAGES_SUMMARY) Map<String, InputStream> images,
       @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
@@ -155,7 +175,7 @@ public class DecisionOperations {
         criteria.put("false", criteriaFalse);
       }
     }
-    runShortcut(config, connection, state, question, new HashMap<>(), options, callback);
+    runShortcut(config, connection, state, question, new HashMap<>(), images, options, callback);
   }
 
   /**
@@ -164,6 +184,11 @@ public class DecisionOperations {
    * <p>
    * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
    * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
+   * <p>
+   * Images (experimental): an option description may be an image reference, so options can be defined by example
+   * pictures. Map each reference to a PNG/JPEG binary under Images, and the call becomes a multipart {@code POST
+   * /{apiVersion}/systemone} with {@code TypeSafe-Danger-Zone-Images: true}. Typesafe, compatible and mock routes only.
+   * See <a href="https://docs.typesafe.ai/images">https://docs.typesafe.ai/images</a>.
    */
   @Alias("choose")
   @DisplayName("[Decide] Choose")
@@ -174,6 +199,7 @@ public class DecisionOperations {
       @Content @TypeResolver(JsonInputResolver.class) InputStream state,
       @DisplayName("Instructions") String instructions, @DisplayName("Options") Map<String, String> chooseOptions,
       @Optional String noMatchOption,
+      @Optional @Content(primary = false) @TypeResolver(ImagesInputResolver.class) @DisplayName("Images") @Summary(IMAGES_SUMMARY) Map<String, InputStream> images,
       @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
@@ -196,7 +222,7 @@ public class DecisionOperations {
       }
       noMatch.put(SHORTCUT_KEY, noMatchOption);
     }
-    runShortcut(config, connection, state, question, noMatch, options, callback);
+    runShortcut(config, connection, state, question, noMatch, images, options, callback);
   }
 
   /**
@@ -205,6 +231,11 @@ public class DecisionOperations {
    * <p>
    * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
    * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
+   * <p>
+   * Images (experimental): a level may be an image reference, so levels can be shown by example. Map each reference to
+   * a PNG/JPEG binary under Images, and the call becomes a multipart {@code POST /{apiVersion}/systemone} with
+   * {@code TypeSafe-Danger-Zone-Images: true}. Typesafe, compatible and mock routes only. See
+   * <a href="https://docs.typesafe.ai/images">https://docs.typesafe.ai/images</a>.
    */
   @Alias("score")
   @DisplayName("[Decide] Score")
@@ -214,6 +245,7 @@ public class DecisionOperations {
   public void score(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
       @Content @TypeResolver(JsonInputResolver.class) InputStream state,
       @DisplayName("Instructions") String instructions, @DisplayName("Levels") List<String> levels,
+      @Optional @Content(primary = false) @TypeResolver(ImagesInputResolver.class) @DisplayName("Images") @Summary(IMAGES_SUMMARY) Map<String, InputStream> images,
       @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
@@ -228,7 +260,39 @@ public class DecisionOperations {
     for (String level : levels) {
       levelsNode.add(level);
     }
-    runShortcut(config, connection, state, question, new HashMap<>(), options, callback);
+    runShortcut(config, connection, state, question, new HashMap<>(), images, options, callback);
+  }
+
+  /**
+   * Asks a single Box question, which finds where something is in an image, and returns just that answer, so a flow
+   * reads {@code payload.box.top}, {@code .bottom}, {@code .left} and {@code .right} (fractions of the image's height
+   * and width, from the top-left corner), {@code payload.confidence} (null when the model gives none) and
+   * {@code payload.derived} ({@code width}, {@code height}, {@code centerX}, {@code centerY}, {@code area}). A box is
+   * always returned, even when the target is absent, so pair it with Ask Yes/No when absence is possible.
+   * <p>
+   * Images is required: write a reference into the state (for example {@code {"photo": "<reference>"}}) or the
+   * instructions and map it to a PNG/JPEG binary. Calls multipart {@code POST /{apiVersion}/systemone} (JSON in part
+   * {@code request}, one file part per image) with {@code TypeSafe-Danger-Zone-Images: true}. Typesafe, compatible and
+   * mock routes only; the TypeSafe API needs Jev 1.14 or later ({@code jev-latest} or {@code jev-preview}). See
+   * <a href="https://docs.typesafe.ai/primitives/box">https://docs.typesafe.ai/primitives/box</a> and
+   * <a href="https://docs.typesafe.ai/images">https://docs.typesafe.ai/images</a>.
+   */
+  @Alias("locate")
+  @DisplayName("[Decide] Locate")
+  @MediaType(value = MediaType.APPLICATION_JSON, strict = false)
+  @OutputResolver(output = BoxAnswerOutputResolver.class, attributes = DecisionAttributesResolver.class)
+  @Throws(DecisionErrorTypeProvider.class)
+  public void locate(@Config TypeSafeConfiguration config, @Connection TypeSafeConnection connection,
+      @Content @TypeResolver(JsonInputResolver.class) InputStream state,
+      @DisplayName("Instructions") @Summary("What to find, and in which image, e.g. the coffee mug in `photo`.") String instructions,
+      @Content(primary = false) @TypeResolver(ImagesInputResolver.class) @DisplayName("Images") @Summary(IMAGES_SUMMARY) Map<String, InputStream> images,
+      @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
+      @ParameterGroup(name = "Request options") RequestOptions options,
+      CompletionCallback<InputStream, DecisionAttributes> callback) {
+    ObjectNode question = Json.object();
+    question.put("type", DecisionRequest.BOX);
+    question.put("instructions", instructions);
+    runShortcut(config, connection, state, question, new HashMap<>(), images, options, callback);
   }
 
   /**
@@ -239,6 +303,11 @@ public class DecisionOperations {
    * <p>
    * Calls {@code POST /{apiVersion}/systemone} on hosted System One routes. See
    * <a href="https://docs.typesafe.ai/api">https://docs.typesafe.ai/api</a>.
+   * <p>
+   * Images (experimental): a candidate's label or description, or the query, may hold an image reference (for example a
+   * product photo per candidate). Map each reference to a PNG/JPEG binary under Images, and the call becomes a
+   * multipart {@code POST /{apiVersion}/systemone} with {@code TypeSafe-Danger-Zone-Images: true}. Typesafe, compatible
+   * and mock routes only. See <a href="https://docs.typesafe.ai/images">https://docs.typesafe.ai/images</a>.
    */
   @Alias("select-candidate")
   @DisplayName("[Select] Candidate")
@@ -251,6 +320,7 @@ public class DecisionOperations {
       String idField, String labelField, @Optional String descriptionField,
       @Optional(defaultValue = "Which candidate best matches the request?") String instructions,
       @Optional(defaultValue = "true") boolean includeNoMatch,
+      @Optional @Content(primary = false) @TypeResolver(ImagesInputResolver.class) @DisplayName("Images") @Summary(IMAGES_SUMMARY) Map<String, InputStream> images,
       @Optional @TypeResolver(NullInputAttributesResolver.class) @DisplayName("Input attributes") Object inputAttributes,
       @ParameterGroup(name = "Request options") RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
@@ -258,10 +328,12 @@ public class DecisionOperations {
     ObjectNode question;
     Map<String, String> noMatch = new HashMap<>();
     Map<String, JsonNode> byId = new LinkedHashMap<>();
+    List<ImageAsset> imageAssets;
     try {
       candidateList = readArray(candidates);
       question = buildCandidateQuestion(candidateList, idField, labelField, descriptionField, instructions,
           includeNoMatch, byId, noMatch);
+      imageAssets = ImageInputs.read(images);
     } catch (ModuleException e) {
       callback.error(e);
       return;
@@ -281,8 +353,8 @@ public class DecisionOperations {
 
     ObjectNode questions = Json.object();
     questions.set(CANDIDATE_KEY, question);
-    DecisionRequest request = new DecisionRequest(queryNode, options.getModelOverride(), questions, noMatch, null,
-        null);
+    DecisionRequest request = new DecisionRequest(queryNode, options.getModelOverride(), questions, noMatch, null, null,
+        imageAssets);
     run(config, connection, request, options, callback, outcome -> candidatePayload(outcome, byId));
   }
 
@@ -295,6 +367,13 @@ public class DecisionOperations {
   private void run(TypeSafeConfiguration config, TypeSafeConnection connection, DecisionRequest request,
       RequestOptions options, CompletionCallback<InputStream, DecisionAttributes> callback,
       Function<DecisionOutcome, ObjectNode> payloadFn) {
+    try {
+      ImageInputs.validate(request);
+      requireImageRoute(connection, request);
+    } catch (ModuleException e) {
+      callback.error(e);
+      return;
+    }
     DecisionContext context = new DecisionContext(config.getPricePerMillionInputTokens(),
         options.isIncludeRawResponse(), options.getStep());
 
@@ -333,6 +412,19 @@ public class DecisionOperations {
     });
   }
 
+  /**
+   * Fails before cache and budget when the request needs images and the primary route cannot carry them, so no budget
+   * is reserved for a call that cannot be made.
+   */
+  private static void requireImageRoute(TypeSafeConnection connection, DecisionRequest request) {
+    if (request.usesImages() && !connection.primary().capabilities().isSupportsImages()) {
+      throw new ModuleException(
+          "The " + connection.primary().routeName()
+              + " route cannot send images or Box questions; connect with the TypeSafe or a compatible route",
+          TypeSafeErrorType.UNSUPPORTED_BY_PROVIDER);
+    }
+  }
+
   /** After a successful engine call: bill the budget window, cache the result and fold it into the stats counters. */
   private static void recordGovernance(TypeSafeConfiguration config, TypeSafeConnection connection,
       DecisionRequest request, DecisionOutcome outcome, boolean cacheThis, DecisionCache cache, String cacheKey) {
@@ -359,7 +451,7 @@ public class DecisionOperations {
   }
 
   private void runShortcut(TypeSafeConfiguration config, TypeSafeConnection connection, InputStream state,
-      ObjectNode question, Map<String, String> noMatchOptions, RequestOptions options,
+      ObjectNode question, Map<String, String> noMatchOptions, Map<String, InputStream> images, RequestOptions options,
       CompletionCallback<InputStream, DecisionAttributes> callback) {
     JsonNode stateNode;
     try {
@@ -368,10 +460,17 @@ public class DecisionOperations {
       callback.error(new ModuleException("Could not parse state as JSON", TypeSafeErrorType.INVALID_STATE, e));
       return;
     }
+    List<ImageAsset> imageAssets;
+    try {
+      imageAssets = ImageInputs.read(images);
+    } catch (ModuleException e) {
+      callback.error(e);
+      return;
+    }
     ObjectNode questions = Json.object();
     questions.set(SHORTCUT_KEY, question);
     DecisionRequest request = new DecisionRequest(stateNode, options.getModelOverride(), questions, noMatchOptions,
-        null, null);
+        null, null, imageAssets);
     run(config, connection, request, options, callback, outcome -> unwrapSingle(outcome));
   }
 
