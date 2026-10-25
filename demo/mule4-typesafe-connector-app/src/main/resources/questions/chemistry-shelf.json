@@ -1,0 +1,30 @@
+{
+  "id": "chemistry-shelf",
+  "version": "1.0.0",
+  "questions": {
+    "Water molecule": {
+      "type": "box",
+      "instructions": "Where is <water_molecule>?"
+    },
+    "Drinkable": {
+      "type": "noul",
+      "instructions": "There's something to drink."
+    },
+    "Party supplies": {
+      "type": "noul",
+      "instructions": "Do we have what we need for a party?"
+    },
+    "Where the last item lands on the strip": {
+      "type": "box",
+      "instructions": "Where would the last item on the shelf show up on <jev_ph>?"
+    },
+    "Soda on the shelf": {
+      "type": "noul",
+      "instructions": "Does the shelf have soda?"
+    },
+    "Hazard pictogram": {
+      "type": "box",
+      "instructions": "Which item matches <ghs02>?"
+    }
+  }
+}

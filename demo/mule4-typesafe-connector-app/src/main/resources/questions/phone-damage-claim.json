@@ -1,0 +1,29 @@
+{
+  "id": "phone-damage-claim",
+  "version": "1.0.0",
+  "questions": {
+    "Damage": {
+      "type": "choice",
+      "instructions": "How severe is the visible physical damage to the phone in `photo`",
+      "criteria": {
+        "None": "No visible damage",
+        "Minor": "Light scratches or scuffs",
+        "Moderate": "Localized cracks, chips, or small dents",
+        "Severe": "Extensive cracking, deep dents, or missing pieces",
+        "Extreme": "Phone is visibly crushed, broken apart, or substantially deformed"
+      }
+    },
+    "Photo supports the claim": {
+      "type": "noul",
+      "instructions": "Does `photo` support `claim`?"
+    },
+    "Is it an iPhone": {
+      "type": "noul",
+      "instructions": "Is the phone in `photo` an iPhone?"
+    },
+    "Is it an Android": {
+      "type": "noul",
+      "instructions": "Is the phone in `photo` an android phone?"
+    }
+  }
+}

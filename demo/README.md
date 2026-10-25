@@ -6,6 +6,6 @@ Import each app from its own directory — never import this parent folder into 
 | App | Path | Purpose |
 | --- | --- | --- |
 | **typesafe-dev** | [`typesafe-dev/`](typesafe-dev/) | End-to-end exercise of every connector operation over HTTP (mock or live routes). |
-| **mule4-typesafe-connector-app** | [`mule4-typesafe-connector-app/`](mule4-typesafe-connector-app/) | Studio verification app used for website / DataSense checks. See [`VERIFICATION.md`](mule4-typesafe-connector-app/VERIFICATION.md). |
+| **mule4-typesafe-connector-app** | [`mule4-typesafe-connector-app/`](mule4-typesafe-connector-app/) | Studio verification app and embedded Jev playground (`GET /playground`). See [`VERIFICATION.md`](mule4-typesafe-connector-app/VERIFICATION.md). |
 
 Neither app is part of the connector Maven build (`mvn clean verify` does not run them).

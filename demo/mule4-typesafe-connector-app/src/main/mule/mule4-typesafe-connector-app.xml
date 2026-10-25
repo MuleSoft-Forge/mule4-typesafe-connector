@@ -54,7 +54,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- [Util] Connection Get Capabilities — verified; Studio-commented   -->
 	<!-- Website: operations/connection-get-capabilities.md                -->
 	<!-- ================================================================== -->
-<flow name="util-connection-get-capabilities" doc:name="util-connection-get-capabilities">
+<flow name="util-connection-get-capabilities" doc:name="util-connection-get-capabilities" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -85,7 +85,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- [Util] Connection List Models — verified; Studio-commented        -->
 	<!-- Website: operations/connection-list-models.md                     -->
 	<!-- ================================================================== -->
-<!-- [STUDIO:"util-connection-list-models"]<flow name="util-connection-list-models" doc:name="util-connection-list-models">
+<flow name="util-connection-list-models" doc:name="util-connection-list-models" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -93,30 +93,30 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[list-models&#93; START - TypeSafe + OpenRouter (scatter-gather)" />
+			message="[list-models] START - TypeSafe + OpenRouter (scatter-gather)" />
 
 		<scatter-gather doc:name="List models TypeSafe + OpenRouter">
 			<route>
-				<typesafe:list-models config-ref="TypeSafe_Config" doc:name="[Util&#93; Connection List Models" />
+				<typesafe:list-models config-ref="TypeSafe_Config" doc:name="[Util] Connection List Models" />
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[list-models&#93; ROUTE=TypeSafe count=' ++ ((attributes.count default sizeOf(payload)) as String) ++ ' attributes=' ++ write(attributes, 'application/json') ++ ' models=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[list-models] ROUTE=TypeSafe count=' ++ ((attributes.count default sizeOf(payload)) as String) ++ ' attributes=' ++ write(attributes, 'application/json') ++ ' models=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
-				<typesafe:list-models config-ref="TypeSafe_Config_OpenRouter" doc:name="[Util&#93; Connection List Models OpenRouter" />
+				<typesafe:list-models config-ref="TypeSafe_Config_OpenRouter" doc:name="[Util] Connection List Models OpenRouter" />
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[list-models&#93; ROUTE=OpenRouter count=' ++ ((attributes.count default sizeOf(payload)) as String) ++ ' attributes=' ++ write(attributes, 'application/json') ++ ' models=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[list-models] ROUTE=OpenRouter count=' ++ ((attributes.count default sizeOf(payload)) as String) ++ ' attributes=' ++ write(attributes, 'application/json') ++ ' models=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[list-models&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[list-models] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 	<!-- ================================================================== -->
 	<!-- [Util] Validate Question Set — verified; Studio-commented         -->
 	<!-- Website: operations/validate-question-set.md                      -->
 	<!-- ================================================================== -->
-<!-- [STUDIO:"util-validate-question-set"]<flow name="util-validate-question-set" doc:name="util-validate-question-set">
+<flow name="util-validate-question-set" doc:name="util-validate-question-set" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -124,30 +124,30 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[validate&#93; START - ok + error-fixture (scatter-gather)" />
+			message="[validate] START - ok + error-fixture (scatter-gather)" />
 
 		<scatter-gather doc:name="Validate ok + error fixture">
 			<route>
 				<typesafe:validate-question-set
 					config-ref="TypeSafe_Config"
 					questionSet="support-ticket-triage.json"
-					doc:name="[Util&#93; Validate Question Set" />
+					doc:name="[Util] Validate Question Set" />
 				<logger level="INFO" doc:name="Log ok"
-					message="#[output text/plain &#45;&#45;- '[validate&#93; ROUTE=ok file=support-ticket-triage.json result=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[validate] ROUTE=ok file=support-ticket-triage.json result=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<typesafe:validate-question-set
 					config-ref="TypeSafe_Config"
 					questionSet="support-ticket-triage-error.json"
-					doc:name="[Util&#93; Validate Question Set (error fixture)" />
+					doc:name="[Util] Validate Question Set (error fixture)" />
 				<logger level="INFO" doc:name="Log error fixture"
-					message="#[output text/plain &#45;&#45;- '[validate&#93; ROUTE=error-fixture file=support-ticket-triage-error.json result=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[validate] ROUTE=error-fixture file=support-ticket-triage-error.json result=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[validate&#93; DONE - see ROUTE=ok and ROUTE=error-fixture lines above" />
-	</flow> [STUDIO] -->
+			message="[validate] DONE - see ROUTE=ok and ROUTE=error-fixture lines above" />
+	</flow>
 
 	<!-- ================================================================== -->
 	<!-- [Decide] Evaluate — verified; Studio-commented                     -->
@@ -155,7 +155,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Billed. Scatter-gather TypeSafe + OpenRouter. Do not log state.   -->
 	<!-- ================================================================== -->
 
-	<!-- [STUDIO:"decide-evaluate"]<flow name="decide-evaluate" doc:name="decide-evaluate">
+	<flow name="decide-evaluate" doc:name="decide-evaluate" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -163,48 +163,175 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[evaluate&#93; START - TypeSafe + OpenRouter (scatter-gather), questionSet=support-ticket-triage.json" />
+			message="[evaluate] START - TypeSafe + OpenRouter (scatter-gather), questionSet=support-ticket-triage.json" />
 
 		<scatter-gather doc:name="Evaluate TypeSafe + OpenRouter">
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:evaluate
 					config-ref="TypeSafe_Config"
 					questionSet="support-ticket-triage.json"
 					step="triage"
-					doc:name="[Decide&#93; Evaluate">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Evaluate">
+					<typesafe:state>#[payload]</typesafe:state>
 				</typesafe:evaluate>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[evaluate&#93; ROUTE=TypeSafe team=' ++ (payload.answers.team.choice default 'n/a') ++ ' urgent.noul=' ++ ((payload.answers.urgent.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[evaluate] ROUTE=TypeSafe team=' ++ (payload.answers.team.choice default 'n/a') ++ ' urgent.noul=' ++ ((payload.answers.urgent.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:evaluate
 					config-ref="TypeSafe_Config_OpenRouter"
 					questionSet="support-ticket-triage.json"
 					step="triage"
-					doc:name="[Decide&#93; Evaluate OpenRouter">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Evaluate OpenRouter">
+					<typesafe:state>#[payload]</typesafe:state>
 				</typesafe:evaluate>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[evaluate&#93; ROUTE=OpenRouter team=' ++ (payload.answers.team.choice default 'n/a') ++ ' urgent.noul=' ++ ((payload.answers.urgent.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[evaluate] ROUTE=OpenRouter team=' ++ (payload.answers.team.choice default 'n/a') ++ ' urgent.noul=' ++ ((payload.answers.urgent.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[evaluate&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[evaluate] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
+
+	<!-- ================================================================== -->
+	<!-- [Decide] Evaluate with an image - TypeSafe playground claim example -->
+	<!-- Website: operations/index.md#images                               -->
+	<!-- Billed on TypeSafe. OpenRouter cannot carry images, so that route  -->
+	<!-- expects TYPESAFE:UNSUPPORTED_BY_PROVIDER before any HTTP call.     -->
+	<!-- ================================================================== -->
+	<flow name="decide-evaluate-image" doc:name="decide-evaluate-image" initialState="stopped">
+		<scheduler doc:name="Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="1" timeUnit="HOURS" />
+			</scheduling-strategy>
+		</scheduler>
+
+		<logger level="INFO" doc:name="Start"
+			message="[evaluate-image] START - TypeSafe + OpenRouter (scatter-gather), questionSet=phone-damage-claim.json, image=images/broken-phone.jpg" />
+
+		<set-variable variableName="photoRef" value="&lt;broken_phone&gt;" doc:name="Photo reference" />
+
+		<scatter-gather doc:name="Evaluate image TypeSafe + OpenRouter">
+			<route>
+				<set-payload mimeType="application/json" doc:name="Set Payload"
+					value='#[output application/json --- {
+						claim: "My phone slid off the kitchen counter onto the tile floor. The screen shattered in the corner and now it will not turn on at all.",
+						photo: vars.photoRef
+					}]' />
+				<typesafe:evaluate
+					config-ref="TypeSafe_Config"
+					questionSet="phone-damage-claim.json"
+					step="claim-photo"
+					doc:name="[Decide] Evaluate (image)">
+					<typesafe:state>#[payload]</typesafe:state>
+					<typesafe:images>#[{ (vars.photoRef): readUrl('classpath://images/broken-phone.jpg', 'application/octet-stream') }]</typesafe:images>
+				</typesafe:evaluate>
+				<logger level="INFO" doc:name="Log TypeSafe"
+					message="#[output text/plain --- '[evaluate-image] ROUTE=TypeSafe damage=' ++ (payload.answers.Damage.choice default 'n/a') ++ ' supportsClaim=' ++ ((payload.answers.'Photo supports the claim'.noul default 'n/a') as String) ++ ' iPhone=' ++ ((payload.answers.'Is it an iPhone'.noul default 'n/a') as String) ++ ' android=' ++ ((payload.answers.'Is it an Android'.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
+			</route>
+			<route>
+				<try doc:name="Try OpenRouter">
+					<set-payload mimeType="application/json" doc:name="Set Payload"
+						value='#[output application/json --- {
+							claim: "My phone slid off the kitchen counter onto the tile floor. The screen shattered in the corner and now it will not turn on at all.",
+							photo: vars.photoRef
+						}]' />
+					<typesafe:evaluate
+						config-ref="TypeSafe_Config_OpenRouter"
+						questionSet="phone-damage-claim.json"
+						step="claim-photo"
+						doc:name="[Decide] Evaluate (image) OpenRouter">
+						<typesafe:state>#[payload]</typesafe:state>
+						<typesafe:images>#[{ (vars.photoRef): readUrl('classpath://images/broken-phone.jpg', 'application/octet-stream') }]</typesafe:images>
+					</typesafe:evaluate>
+					<logger level="WARN" doc:name="Log OpenRouter unexpected"
+						message="#[output text/plain --- '[evaluate-image] ROUTE=OpenRouter UNEXPECTED success payload=' ++ write(payload, 'application/json')]" />
+					<error-handler>
+						<on-error-continue type="TYPESAFE:UNSUPPORTED_BY_PROVIDER" doc:name="Expected: images unsupported">
+							<logger level="INFO" doc:name="Log OpenRouter refused"
+								message="#[output text/plain --- '[evaluate-image] ROUTE=OpenRouter EXPECTED error=' ++ error.errorType.namespace ++ ':' ++ error.errorType.identifier ++ ' description=' ++ (error.description default '')]" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+		</scatter-gather>
+
+		<logger level="INFO" doc:name="Done"
+			message="[evaluate-image] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
+
+	<!-- ================================================================== -->
+	<!-- [Decide] Evaluate with four images - TypeSafe playground shelf     -->
+	<!-- Box + Noul over a shelf photo and three reference images.         -->
+	<!-- Website: operations/index.md#images, operations/locate.md         -->
+	<!-- Billed on TypeSafe. OpenRouter expects UNSUPPORTED_BY_PROVIDER.   -->
+	<!-- ================================================================== -->
+	<flow name="decide-evaluate-shelf" doc:name="decide-evaluate-shelf" initialState="stopped">
+		<scheduler doc:name="Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="1" timeUnit="HOURS" />
+			</scheduling-strategy>
+		</scheduler>
+
+		<logger level="INFO" doc:name="Start"
+			message="[evaluate-shelf] START - TypeSafe + OpenRouter (scatter-gather), questionSet=chemistry-shelf.json, images=4" />
+
+
+		<scatter-gather doc:name="Evaluate shelf TypeSafe + OpenRouter">
+			<route>
+				<set-payload mimeType="application/json" doc:name="Set Payload"
+					value='#[output application/json --- "&lt;shelf_liquids&gt;"]' />
+				<typesafe:evaluate
+					config-ref="TypeSafe_Config"
+					questionSet="chemistry-shelf.json"
+					step="chemistry-shelf"
+					doc:name="[Decide] Evaluate (shelf)">
+					<typesafe:state>#[payload]</typesafe:state>
+					<typesafe:images>#[{ '&lt;shelf_liquids&gt;': readUrl('classpath://images/chemistry-shelf.jpg', 'application/octet-stream'), '&lt;water_molecule&gt;': readUrl('classpath://images/water-molecule.jpg', 'application/octet-stream'), '&lt;jev_ph&gt;': readUrl('classpath://images/jev-ph-strip.png', 'application/octet-stream'), '&lt;ghs02&gt;': readUrl('classpath://images/ghs02-flammable.png', 'application/octet-stream') }]</typesafe:images>
+				</typesafe:evaluate>
+				<logger level="INFO" doc:name="Log TypeSafe"
+					message="#[output text/plain --- '[evaluate-shelf] ROUTE=TypeSafe water=' ++ write(payload.answers.'Water molecule'.box default {}, 'application/json') ++ ' drinkable=' ++ ((payload.answers.Drinkable.noul default 'n/a') as String) ++ ' party=' ++ ((payload.answers.'Party supplies'.noul default 'n/a') as String) ++ ' strip=' ++ write(payload.answers.'Where the last item lands on the strip'.box default {}, 'application/json') ++ ' soda=' ++ ((payload.answers.'Soda on the shelf'.noul default 'n/a') as String) ++ ' hazard=' ++ write(payload.answers.'Hazard pictogram'.box default {}, 'application/json') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
+			</route>
+			<route>
+				<try doc:name="Try OpenRouter">
+					<set-payload mimeType="application/json" doc:name="Set Payload"
+						value='#[output application/json --- "&lt;shelf_liquids&gt;"]' />
+					<typesafe:evaluate
+						config-ref="TypeSafe_Config_OpenRouter"
+						questionSet="chemistry-shelf.json"
+						step="chemistry-shelf"
+						doc:name="[Decide] Evaluate (shelf) OpenRouter">
+						<typesafe:state>#[payload]</typesafe:state>
+						<typesafe:images>#[{ '&lt;shelf_liquids&gt;': readUrl('classpath://images/chemistry-shelf.jpg', 'application/octet-stream'), '&lt;water_molecule&gt;': readUrl('classpath://images/water-molecule.jpg', 'application/octet-stream'), '&lt;jev_ph&gt;': readUrl('classpath://images/jev-ph-strip.png', 'application/octet-stream'), '&lt;ghs02&gt;': readUrl('classpath://images/ghs02-flammable.png', 'application/octet-stream') }]</typesafe:images>
+					</typesafe:evaluate>
+					<logger level="WARN" doc:name="Log OpenRouter unexpected"
+						message="#[output text/plain --- '[evaluate-shelf] ROUTE=OpenRouter UNEXPECTED success payload=' ++ write(payload, 'application/json')]" />
+					<error-handler>
+						<on-error-continue type="TYPESAFE:UNSUPPORTED_BY_PROVIDER" doc:name="Expected: images unsupported">
+							<logger level="INFO" doc:name="Log OpenRouter refused"
+								message="#[output text/plain --- '[evaluate-shelf] ROUTE=OpenRouter EXPECTED error=' ++ error.errorType.namespace ++ ':' ++ error.errorType.identifier ++ ' description=' ++ (error.description default '')]" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+		</scatter-gather>
+
+		<logger level="INFO" doc:name="Done"
+			message="[evaluate-shelf] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -212,7 +339,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Website: operations/ask-noul.md                                   -->
 	<!-- Billed. Scatter-gather TypeSafe + OpenRouter. Do not log state.   -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"decide-ask-noul"]<flow name="decide-ask-noul" doc:name="decide-ask-noul">
+	<flow name="decide-ask-noul" doc:name="decide-ask-noul" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -220,52 +347,52 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[ask-noul&#93; START - TypeSafe + OpenRouter (scatter-gather)" />
+			message="[ask-noul] START - TypeSafe + OpenRouter (scatter-gather)" />
 
 		<scatter-gather doc:name="Ask Yes/No TypeSafe + OpenRouter">
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:ask-noul
 					config-ref="TypeSafe_Config"
 					instructions="Does this ticket need a fast response?"
 					criteriaTrue="An outage, deadline, or loss is described."
 					criteriaFalse="This is a routine request."
 					step="urgency"
-					doc:name="[Decide&#93; Ask Yes/No">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Ask Yes/No">
+					<typesafe:state>#[payload]</typesafe:state>
 				</typesafe:ask-noul>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[ask-noul&#93; ROUTE=TypeSafe noul=' ++ ((payload.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[ask-noul] ROUTE=TypeSafe noul=' ++ ((payload.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:ask-noul
 					config-ref="TypeSafe_Config_OpenRouter"
 					instructions="Does this ticket need a fast response?"
 					criteriaTrue="An outage, deadline, or loss is described."
 					criteriaFalse="This is a routine request."
 					step="urgency"
-					doc:name="[Decide&#93; Ask Yes/No OpenRouter">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Ask Yes/No OpenRouter">
+					<typesafe:state>#[payload]</typesafe:state>
 				</typesafe:ask-noul>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[ask-noul&#93; ROUTE=OpenRouter noul=' ++ ((payload.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[ask-noul] ROUTE=OpenRouter noul=' ++ ((payload.noul default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[ask-noul&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[ask-noul] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -273,7 +400,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Website: operations/choose.md                                     -->
 	<!-- Billed. Scatter-gather TypeSafe + OpenRouter. Do not log state.   -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"decide-choose"]<flow name="decide-choose" doc:name="decide-choose">
+	<flow name="decide-choose" doc:name="decide-choose" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -281,23 +408,23 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[choose&#93; START - TypeSafe + OpenRouter (scatter-gather)" />
+			message="[choose] START - TypeSafe + OpenRouter (scatter-gather)" />
 
 		<scatter-gather doc:name="Choose TypeSafe + OpenRouter">
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:choose
 					config-ref="TypeSafe_Config"
 					instructions="Which team should own this ticket?"
 					noMatchOption="other"
 					step="routing"
-					doc:name="[Decide&#93; Choose">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Choose">
+					<typesafe:state>#[payload]</typesafe:state>
 					<typesafe:choose-options>
 						<typesafe:choose-option key="billing" value="Payments, invoices, and refunds." />
 						<typesafe:choose-option key="technical" value="Product and API problems." />
@@ -305,22 +432,22 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					</typesafe:choose-options>
 				</typesafe:choose>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[choose&#93; ROUTE=TypeSafe choice=' ++ (payload.choice default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[choose] ROUTE=TypeSafe choice=' ++ (payload.choice default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:choose
 					config-ref="TypeSafe_Config_OpenRouter"
 					instructions="Which team should own this ticket?"
 					noMatchOption="other"
 					step="routing"
-					doc:name="[Decide&#93; Choose OpenRouter">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Choose OpenRouter">
+					<typesafe:state>#[payload]</typesafe:state>
 					<typesafe:choose-options>
 						<typesafe:choose-option key="billing" value="Payments, invoices, and refunds." />
 						<typesafe:choose-option key="technical" value="Product and API problems." />
@@ -328,13 +455,13 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					</typesafe:choose-options>
 				</typesafe:choose>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[choose&#93; ROUTE=OpenRouter choice=' ++ (payload.choice default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[choose] ROUTE=OpenRouter choice=' ++ (payload.choice default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[choose&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[choose] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -342,7 +469,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Website: operations/score.md                                      -->
 	<!-- Billed. Scatter-gather TypeSafe + OpenRouter. Do not log state.   -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"decide-score"]<flow name="decide-score" doc:name="decide-score">
+	<flow name="decide-score" doc:name="decide-score" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -350,22 +477,22 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[score&#93; START - TypeSafe + OpenRouter (scatter-gather)" />
+			message="[score] START - TypeSafe + OpenRouter (scatter-gather)" />
 
 		<scatter-gather doc:name="Score TypeSafe + OpenRouter">
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:score
 					config-ref="TypeSafe_Config"
 					instructions="How positive is the customer's tone?"
 					step="sentiment"
-					doc:name="[Decide&#93; Score">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Score">
+					<typesafe:state>#[payload]</typesafe:state>
 					<typesafe:levels>
 						<typesafe:level value="very negative" />
 						<typesafe:level value="negative" />
@@ -375,21 +502,21 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					</typesafe:levels>
 				</typesafe:score>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[score&#93; ROUTE=TypeSafe score=' ++ ((payload.score default 'n/a') as String) ++ ' level=' ++ ((payload.derived.level default 'n/a') as String) ++ ' levelLabel=' ++ (payload.derived.levelLabel default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[score] ROUTE=TypeSafe score=' ++ ((payload.score default 'n/a') as String) ++ ' level=' ++ ((payload.derived.level default 'n/a') as String) ++ ' levelLabel=' ++ (payload.derived.levelLabel default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Payload"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						id: "T-1001",
 						subject: "Production checkout outage",
 						body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-					}&#93;' />
+					}]' />
 				<typesafe:score
 					config-ref="TypeSafe_Config_OpenRouter"
 					instructions="How positive is the customer's tone?"
 					step="sentiment"
-					doc:name="[Decide&#93; Score OpenRouter">
-					<typesafe:state>#[payload&#93;</typesafe:state>
+					doc:name="[Decide] Score OpenRouter">
+					<typesafe:state>#[payload]</typesafe:state>
 					<typesafe:levels>
 						<typesafe:level value="very negative" />
 						<typesafe:level value="negative" />
@@ -399,13 +526,13 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					</typesafe:levels>
 				</typesafe:score>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[score&#93; ROUTE=OpenRouter score=' ++ ((payload.score default 'n/a') as String) ++ ' level=' ++ ((payload.derived.level default 'n/a') as String) ++ ' levelLabel=' ++ (payload.derived.levelLabel default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[score] ROUTE=OpenRouter score=' ++ ((payload.score default 'n/a') as String) ++ ' level=' ++ ((payload.derived.level default 'n/a') as String) ++ ' levelLabel=' ++ (payload.derived.levelLabel default 'n/a') ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[score&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[score] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -413,7 +540,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Website: operations/select-candidate.md                           -->
 	<!-- Billed. Scatter-gather TypeSafe + OpenRouter. Do not log state.   -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"select-candidate"]<flow name="select-candidate" doc:name="select-candidate">
+	<flow name="select-candidate" doc:name="select-candidate" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -421,7 +548,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[select-candidate&#93; START - TypeSafe + OpenRouter (scatter-gather)" />
+			message="[select-candidate] START - TypeSafe + OpenRouter (scatter-gather)" />
 
 		<scatter-gather doc:name="Select Candidate TypeSafe + OpenRouter">
 			<route>
@@ -431,18 +558,18 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					labelField="name"
 					descriptionField="description"
 					step="queue-selection"
-					doc:name="[Select&#93; Candidate">
-					<typesafe:candidates>#[output application/json &#45;&#45;-
+					doc:name="[Select] Candidate">
+					<typesafe:candidates>#[output application/json ---
 [
   { id: "billing-queue", name: "Billing", description: "Payments, invoices, refunds and subscription changes." },
   { id: "technical-queue", name: "Technical", description: "Product errors, outages, integration and API problems." },
   { id: "account-queue", name: "Account", description: "Login, access, roles and account administration." }
-&#93;&#93;</typesafe:candidates>
-					<typesafe:query>#[output application/json &#45;&#45;-
-{ request: "I was billed twice for my subscription and need a refund." }&#93;</typesafe:query>
+]]</typesafe:candidates>
+					<typesafe:query>#[output application/json ---
+{ request: "I was billed twice for my subscription and need a refund." }]</typesafe:query>
 				</typesafe:select-candidate>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[select-candidate&#93; ROUTE=TypeSafe id=' ++ (payload.id default 'n/a') ++ ' isNoMatch=' ++ ((payload.isNoMatch default false) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[select-candidate] ROUTE=TypeSafe id=' ++ (payload.id default 'n/a') ++ ' isNoMatch=' ++ ((payload.isNoMatch default false) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<typesafe:select-candidate
@@ -451,24 +578,24 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					labelField="name"
 					descriptionField="description"
 					step="queue-selection"
-					doc:name="[Select&#93; Candidate OpenRouter">
-					<typesafe:candidates>#[output application/json &#45;&#45;-
+					doc:name="[Select] Candidate OpenRouter">
+					<typesafe:candidates>#[output application/json ---
 [
   { id: "billing-queue", name: "Billing", description: "Payments, invoices, refunds and subscription changes." },
   { id: "technical-queue", name: "Technical", description: "Product errors, outages, integration and API problems." },
   { id: "account-queue", name: "Account", description: "Login, access, roles and account administration." }
-&#93;&#93;</typesafe:candidates>
-					<typesafe:query>#[output application/json &#45;&#45;-
-{ request: "I was billed twice for my subscription and need a refund." }&#93;</typesafe:query>
+]]</typesafe:candidates>
+					<typesafe:query>#[output application/json ---
+{ request: "I was billed twice for my subscription and need a refund." }]</typesafe:query>
 				</typesafe:select-candidate>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[select-candidate&#93; ROUTE=OpenRouter id=' ++ (payload.id default 'n/a') ++ ' isNoMatch=' ++ ((payload.isNoMatch default false) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[select-candidate] ROUTE=OpenRouter id=' ++ (payload.id default 'n/a') ++ ' isNoMatch=' ++ ((payload.isNoMatch default false) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[select-candidate&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[select-candidate] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -477,7 +604,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Billed (1 call per unique state). Scatter-gather TypeSafe+OR.     -->
 	<!-- Uses support-ticket-triage.json (not colliding ticket-triage).    -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"decide-evaluate-batch"]<flow name="decide-evaluate-batch" doc:name="decide-evaluate-batch">
+	<flow name="decide-evaluate-batch" doc:name="decide-evaluate-batch" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -485,12 +612,12 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[evaluate-batch&#93; START - TypeSafe + OpenRouter (scatter-gather), 3 items (1 duplicate)" />
+			message="[evaluate-batch] START - TypeSafe + OpenRouter (scatter-gather), 3 items (1 duplicate)" />
 
 		<scatter-gather doc:name="Evaluate Batch TypeSafe + OpenRouter">
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Items"
-					value='#[output application/json &#45;&#45;- [
+					value='#[output application/json --- [
 						{
 							id: "T-1001",
 							subject: "Production checkout outage",
@@ -506,7 +633,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 							subject: "Production checkout outage",
 							body: "Customers cannot pay and revenue is being lost. Please respond immediately."
 						}
-					&#93;&#93;' />
+					]]' />
 				<typesafe:evaluate-batch
 					config-ref="TypeSafe_Config"
 					questionSet="support-ticket-triage.json"
@@ -514,15 +641,15 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					maxConcurrency="4"
 					deduplicate="true"
 					maxItems="1000"
-					doc:name="[Decide&#93; Evaluate Batch">
-					<typesafe:items>#[payload&#93;</typesafe:items>
+					doc:name="[Decide] Evaluate Batch">
+					<typesafe:items>#[payload]</typesafe:items>
 				</typesafe:evaluate-batch>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[evaluate-batch&#93; ROUTE=TypeSafe total=' ++ ((attributes.total default sizeOf(payload)) as String) ++ ' succeeded=' ++ ((attributes.succeeded default 'n/a') as String) ++ ' cached=' ++ ((attributes.cached default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[evaluate-batch] ROUTE=TypeSafe total=' ++ ((attributes.total default sizeOf(payload)) as String) ++ ' succeeded=' ++ ((attributes.succeeded default 'n/a') as String) ++ ' cached=' ++ ((attributes.cached default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Items"
-					value='#[output application/json &#45;&#45;- [
+					value='#[output application/json --- [
 						{
 							id: "T-1001",
 							subject: "Production checkout outage",
@@ -538,7 +665,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 							subject: "Production checkout outage",
 							body: "Customers cannot pay and revenue is being lost. Please respond immediately."
 						}
-					&#93;&#93;' />
+					]]' />
 				<typesafe:evaluate-batch
 					config-ref="TypeSafe_Config_OpenRouter"
 					questionSet="support-ticket-triage.json"
@@ -546,17 +673,17 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					maxConcurrency="4"
 					deduplicate="true"
 					maxItems="1000"
-					doc:name="[Decide&#93; Evaluate Batch OpenRouter">
-					<typesafe:items>#[payload&#93;</typesafe:items>
+					doc:name="[Decide] Evaluate Batch OpenRouter">
+					<typesafe:items>#[payload]</typesafe:items>
 				</typesafe:evaluate-batch>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[evaluate-batch&#93; ROUTE=OpenRouter total=' ++ ((attributes.total default sizeOf(payload)) as String) ++ ' succeeded=' ++ ((attributes.succeeded default 'n/a') as String) ++ ' cached=' ++ ((attributes.cached default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[evaluate-batch] ROUTE=OpenRouter total=' ++ ((attributes.total default sizeOf(payload)) as String) ++ ' succeeded=' ++ ((attributes.succeeded default 'n/a') as String) ++ ' cached=' ++ ((attributes.cached default 'n/a') as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[evaluate-batch&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[evaluate-batch] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -564,7 +691,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Website: operations/filter.md                                     -->
 	<!-- Billed (1 call per chunk). Scatter-gather TypeSafe + OpenRouter.  -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"select-filter"]<flow name="select-filter" doc:name="select-filter">
+	<flow name="select-filter" doc:name="select-filter" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -572,12 +699,12 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[filter&#93; START - TypeSafe + OpenRouter (scatter-gather), threshold=0.7" />
+			message="[filter] START - TypeSafe + OpenRouter (scatter-gather), threshold=0.7" />
 
 		<scatter-gather doc:name="Filter TypeSafe + OpenRouter">
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Items"
-					value='#[output application/json &#45;&#45;- [
+					value='#[output application/json --- [
 						{
 							id: "T-1001",
 							subject: "Production checkout outage",
@@ -588,7 +715,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 							subject: "How do I change my password?",
 							body: "I forgot my password and would like a reset link when you have a moment."
 						}
-					&#93;&#93;' />
+					]]' />
 				<typesafe:filter
 					config-ref="TypeSafe_Config"
 					question="Is this ticket urgent?"
@@ -596,15 +723,15 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					chunkSize="20"
 					textField="body"
 					maxConcurrency="4"
-					doc:name="[Select&#93; Filter">
-					<typesafe:items>#[payload&#93;</typesafe:items>
+					doc:name="[Select] Filter">
+					<typesafe:items>#[payload]</typesafe:items>
 				</typesafe:filter>
 				<logger level="INFO" doc:name="Log TypeSafe"
-					message="#[output text/plain &#45;&#45;- '[filter&#93; ROUTE=TypeSafe kept=' ++ (sizeOf(payload.kept) as String) ++ ' dropped=' ++ (sizeOf(payload.dropped) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[filter] ROUTE=TypeSafe kept=' ++ (sizeOf(payload.kept) as String) ++ ' dropped=' ++ (sizeOf(payload.dropped) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="Set Items"
-					value='#[output application/json &#45;&#45;- [
+					value='#[output application/json --- [
 						{
 							id: "T-1001",
 							subject: "Production checkout outage",
@@ -615,7 +742,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 							subject: "How do I change my password?",
 							body: "I forgot my password and would like a reset link when you have a moment."
 						}
-					&#93;&#93;' />
+					]]' />
 				<typesafe:filter
 					config-ref="TypeSafe_Config_OpenRouter"
 					question="Is this ticket urgent?"
@@ -623,17 +750,17 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 					chunkSize="20"
 					textField="body"
 					maxConcurrency="4"
-					doc:name="[Select&#93; Filter OpenRouter">
-					<typesafe:items>#[payload&#93;</typesafe:items>
+					doc:name="[Select] Filter OpenRouter">
+					<typesafe:items>#[payload]</typesafe:items>
 				</typesafe:filter>
 				<logger level="INFO" doc:name="Log OpenRouter"
-					message="#[output text/plain &#45;&#45;- '[filter&#93; ROUTE=OpenRouter kept=' ++ (sizeOf(payload.kept) as String) ++ ' dropped=' ++ (sizeOf(payload.dropped) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[filter] ROUTE=OpenRouter kept=' ++ (sizeOf(payload.kept) as String) ++ ' dropped=' ++ (sizeOf(payload.dropped) as String) ++ ' attributes=' ++ write(attributes - 'rawResponse', 'application/json') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[filter&#93; DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
-	</flow> [STUDIO] -->
+			message="[filter] DONE - see ROUTE=TypeSafe and ROUTE=OpenRouter lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
@@ -642,7 +769,7 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 	<!-- Local — no provider call. Scatter-gather ACCEPT + REVIEW fixtures -->
 	<!-- Policy lives on support-ticket-triage.json                        -->
 	<!-- ================================================================== -->
-	<!-- [STUDIO:"policy-apply"]<flow name="policy-apply" doc:name="policy-apply">
+	<flow name="policy-apply" doc:name="policy-apply" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
@@ -650,12 +777,12 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 		</scheduler>
 
 		<logger level="INFO" doc:name="Start"
-			message="[apply-policy&#93; START - ACCEPT + REVIEW fixtures (scatter-gather)" />
+			message="[apply-policy] START - ACCEPT + REVIEW fixtures (scatter-gather)" />
 
 		<scatter-gather doc:name="Apply policy ACCEPT + REVIEW">
 			<route>
 				<set-payload mimeType="application/json" doc:name="ACCEPT decision"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						model: "jev-1.13.0",
 						answers: {
 							team: {
@@ -667,19 +794,19 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 							},
 							urgent: { "type": "noul", noul: 0.98 }
 						}
-					}&#93;' />
+					}]' />
 				<typesafe:apply-policy
 					config-ref="TypeSafe_Config"
 					questionSet="support-ticket-triage.json"
-					doc:name="[Policy&#93; Apply ACCEPT">
-					<typesafe:decision>#[payload&#93;</typesafe:decision>
+					doc:name="[Policy] Apply ACCEPT">
+					<typesafe:decision>#[payload]</typesafe:decision>
 				</typesafe:apply-policy>
 				<logger level="INFO" doc:name="Log ACCEPT"
-					message="#[output text/plain &#45;&#45;- '[apply-policy&#93; ROUTE=accept-fixture action=' ++ (payload.action default 'n/a') ++ ' routeKey=' ++ (payload.routeKey default 'n/a') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[apply-policy] ROUTE=accept-fixture action=' ++ (payload.action default 'n/a') ++ ' routeKey=' ++ (payload.routeKey default 'n/a') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 			<route>
 				<set-payload mimeType="application/json" doc:name="REVIEW decision"
-					value='#[output application/json &#45;&#45;- {
+					value='#[output application/json --- {
 						model: "jev-1.13.0",
 						answers: {
 							team: {
@@ -691,28 +818,28 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 							},
 							urgent: { "type": "noul", noul: 0.55 }
 						}
-					}&#93;' />
+					}]' />
 				<typesafe:apply-policy
 					config-ref="TypeSafe_Config"
 					questionSet="support-ticket-triage.json"
-					doc:name="[Policy&#93; Apply REVIEW">
-					<typesafe:decision>#[payload&#93;</typesafe:decision>
+					doc:name="[Policy] Apply REVIEW">
+					<typesafe:decision>#[payload]</typesafe:decision>
 				</typesafe:apply-policy>
 				<logger level="INFO" doc:name="Log REVIEW"
-					message="#[output text/plain &#45;&#45;- '[apply-policy&#93; ROUTE=review-fixture action=' ++ (payload.action default 'n/a') ++ ' routeKey=' ++ (payload.routeKey default 'n/a') ++ ' payload=' ++ write(payload, 'application/json')&#93;" />
+					message="#[output text/plain --- '[apply-policy] ROUTE=review-fixture action=' ++ (payload.action default 'n/a') ++ ' routeKey=' ++ (payload.routeKey default 'n/a') ++ ' payload=' ++ write(payload, 'application/json')]" />
 			</route>
 		</scatter-gather>
 
 		<logger level="INFO" doc:name="Done"
-			message="[apply-policy&#93; DONE - see ROUTE=accept-fixture and ROUTE=review-fixture lines above" />
-	</flow> [STUDIO] -->
+			message="[apply-policy] DONE - see ROUTE=accept-fixture and ROUTE=review-fixture lines above" />
+	</flow>
 
 
 	<!-- ================================================================== -->
 	<!-- Sources: On Budget Threshold — verified; Studio-commented -->
 	<!-- Website: sources.md                                               -->
 	<!-- ================================================================== -->
-<!-- [STUDIO:"source-on-budget-threshold"]<flow name="source-on-budget-threshold" doc:name="source-on-budget-threshold">
+<flow name="source-on-budget-threshold" doc:name="source-on-budget-threshold" initialState="stopped">
 		<typesafe:on-budget-threshold
 			config-ref="TypeSafe_Config_Monitoring"
 			percent="80"
@@ -723,59 +850,59 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 			</scheduling-strategy>
 		</typesafe:on-budget-threshold>
 		<logger level="INFO" doc:name="Log budget event"
-			message="#[output text/plain &#45;&#45;- '[on-budget-threshold&#93; payload=' ++ write(payload, 'application/json')&#93;" />
-	</flow> [STUDIO] -->
+			message="#[output text/plain --- '[on-budget-threshold] payload=' ++ write(payload, 'application/json')]" />
+	</flow>
 
 	<!-- Driver: two billed calls so usage reaches the 80% threshold of limit 2 -->
-<!-- [STUDIO:"source-budget-driver"]<flow name="source-budget-driver" doc:name="source-budget-driver">
+<flow name="source-budget-driver" doc:name="source-budget-driver" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="Start"
-			message="[budget-driver&#93; START - two ask-noul calls on TypeSafe_Config_Monitoring" />
+			message="[budget-driver] START - two ask-noul calls on TypeSafe_Config_Monitoring" />
 		<set-payload mimeType="application/json" doc:name="Set Payload"
-			value='#[output application/json &#45;&#45;- {
+			value='#[output application/json --- {
 				id: "T-1001",
 				subject: "Production checkout outage",
 				body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-			}&#93;' />
+			}]' />
 		<typesafe:ask-noul
 			config-ref="TypeSafe_Config_Monitoring"
 			instructions="Does this ticket need a fast response?"
 			criteriaTrue="An outage, deadline, or loss is described."
 			criteriaFalse="This is a routine request."
 			step="budget-driver-1"
-			doc:name="[Decide&#93; Ask Yes/No 1">
-			<typesafe:state>#[payload&#93;</typesafe:state>
+			doc:name="[Decide] Ask Yes/No 1">
+			<typesafe:state>#[payload]</typesafe:state>
 		</typesafe:ask-noul>
 		<logger level="INFO" doc:name="After call 1"
-			message="[budget-driver&#93; call 1 done" />
+			message="[budget-driver] call 1 done" />
 		<set-payload mimeType="application/json" doc:name="Set Payload again"
-			value='#[output application/json &#45;&#45;- {
+			value='#[output application/json --- {
 				id: "T-1001",
 				subject: "Production checkout outage",
 				body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-			}&#93;' />
+			}]' />
 		<typesafe:ask-noul
 			config-ref="TypeSafe_Config_Monitoring"
 			instructions="Does this ticket need a fast response?"
 			criteriaTrue="An outage, deadline, or loss is described."
 			criteriaFalse="This is a routine request."
 			step="budget-driver-2"
-			doc:name="[Decide&#93; Ask Yes/No 2">
-			<typesafe:state>#[payload&#93;</typesafe:state>
+			doc:name="[Decide] Ask Yes/No 2">
+			<typesafe:state>#[payload]</typesafe:state>
 		</typesafe:ask-noul>
 		<logger level="INFO" doc:name="Done"
-			message="[budget-driver&#93; DONE - wait for [on-budget-threshold&#93; within ~5s" />
-	</flow> [STUDIO] -->
+			message="[budget-driver] DONE - wait for [on-budget-threshold] within ~5s" />
+	</flow>
 
 	<!-- ================================================================== -->
 	<!-- Sources: On Provider Failover — verified; Studio-commented -->
 	<!-- Website: sources.md                                               -->
 		<!-- ================================================================== -->
-	<!-- [STUDIO:"source-on-provider-failover"]<flow name="source-on-provider-failover" doc:name="source-on-provider-failover">
+	<flow name="source-on-provider-failover" doc:name="source-on-provider-failover" initialState="stopped">
 		<typesafe:on-provider-failover
 			config-ref="TypeSafe_Config_Failover"
 			doc:name="On Provider Failover">
@@ -784,35 +911,35 @@ http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule
 			</scheduling-strategy>
 		</typesafe:on-provider-failover>
 		<logger level="INFO" doc:name="Log failover"
-			message="#[output text/plain &#45;&#45;- '[on-provider-failover&#93; payload=' ++ write(payload, 'application/json')&#93;" />
-	</flow> [STUDIO] -->
+			message="#[output text/plain --- '[on-provider-failover] payload=' ++ write(payload, 'application/json')]" />
+	</flow>
 
 	<!-- Driver: one ask-noul; expects retries on primary then OpenRouter success -->
-	<!-- [STUDIO:"source-failover-driver"]<flow name="source-failover-driver" doc:name="source-failover-driver">
+	<flow name="source-failover-driver" doc:name="source-failover-driver" initialState="stopped">
 		<scheduler doc:name="Scheduler">
 			<scheduling-strategy>
 				<fixed-frequency frequency="1" timeUnit="HOURS" />
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="Start"
-			message="[failover-driver&#93; START - ask-noul on TypeSafe_Config_Failover (bad primary URL)" />
+			message="[failover-driver] START - ask-noul on TypeSafe_Config_Failover (bad primary URL)" />
 		<set-payload mimeType="application/json" doc:name="Set Payload"
-			value='#[output application/json &#45;&#45;- {
+			value='#[output application/json --- {
 				id: "T-1001",
 				subject: "Production checkout outage",
 				body: "Customers cannot pay and revenue is being lost. Please respond immediately."
-			}&#93;' />
+			}]' />
 		<typesafe:ask-noul
 			config-ref="TypeSafe_Config_Failover"
 			instructions="Does this ticket need a fast response?"
 			criteriaTrue="An outage, deadline, or loss is described."
 			criteriaFalse="This is a routine request."
 			step="failover-driver-1"
-			doc:name="[Decide&#93; Ask Yes/No (failover)">
-			<typesafe:state>#[payload&#93;</typesafe:state>
+			doc:name="[Decide] Ask Yes/No (failover)">
+			<typesafe:state>#[payload]</typesafe:state>
 		</typesafe:ask-noul>
 		<logger level="INFO" doc:name="After call"
-			message="#[output text/plain &#45;&#45;- '[failover-driver&#93; DONE provider=' ++ (attributes.provider default '?') ++ ' failedOverFrom=' ++ write(attributes.failedOverFrom default [&#93;, 'application/json') ++ ' — wait for [on-provider-failover&#93;'&#93;" />
-	</flow> [STUDIO] -->
+			message="#[output text/plain --- '[failover-driver] DONE provider=' ++ (attributes.provider default '?') ++ ' failedOverFrom=' ++ write(attributes.failedOverFrom default [], 'application/json') ++ ' - wait for [on-provider-failover]']" />
+	</flow>
 
 </mule>

@@ -24,6 +24,9 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
   support are skipped for image requests.
 - **`TYPESAFE:REQUEST_TOO_LARGE`** for HTTP 413.
 - The decision cache key includes each image's SHA-256, so the same text with a different photo is a cache miss.
+- **Embedded playground** in `demo/mule4-typesafe-connector-app` (`GET /playground`). Serves a TypeSafe-style UI
+  that calls Evaluate, Ask Yes/No, Choose, Score, Locate, Validate, Apply Policy, List Models, and Get Capabilities
+  through the connector, with integration-first examples and image / Locate demos.
 
 ### Changed
 - HTTP 415 (unsupported `Content-Encoding`) maps to `TYPESAFE:PROVIDER_VALIDATION`.

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:typesafe="http://www.mulesoft.org/schema/mule/typesafe"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule/typesafe/current/mule-typesafe.xsd">
+
+	<!-- ================================================================== -->
+	<!-- Playground API flows. Shared listener, read-request, respond and   -->
+	<!-- error handler live in playground.xml.                              -->
+	<!-- ================================================================== -->
+
+	<flow name="playground-evaluate" doc:name="playground-evaluate">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/evaluate" allowedMethods="POST" doc:name="POST /playground/api/evaluate">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Decide] Evaluate" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="POST /{apiVersion}/systemone" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request"
+			message="#['[playground] evaluate model=' ++ (vars.req.model default 'connection default') ++ ' questions=' ++ (sizeOf(vars.req.questions default {}) as String) ++ ' images=' ++ (sizeOf(vars.images) as String)]" />
+		<typesafe:evaluate config-ref="TypeSafe_Config" modelOverride="#[vars.req.model]" step="playground" doc:name="[Decide] Evaluate">
+			<typesafe:state><![CDATA[#[output application/json --- vars.req.state]]]></typesafe:state>
+			<typesafe:questions><![CDATA[#[output application/json --- vars.req.questions]]]></typesafe:questions>
+			<typesafe:images><![CDATA[#[vars.images]]]></typesafe:images>
+		</typesafe:evaluate>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-ask-noul" doc:name="playground-ask-noul">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/ask-noul" allowedMethods="POST" doc:name="POST /playground/api/ask-noul">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Decide] Ask Yes/No" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="POST /{apiVersion}/systemone" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request"
+			message="#['[playground] ask-noul model=' ++ (vars.req.model default 'connection default') ++ ' images=' ++ (sizeOf(vars.images) as String)]" />
+		<typesafe:ask-noul config-ref="TypeSafe_Config"
+			instructions="#[vars.req.instructions]"
+			criteriaTrue="#[vars.req.criteriaTrue]"
+			criteriaFalse="#[vars.req.criteriaFalse]"
+			modelOverride="#[vars.req.model]"
+			step="playground"
+			doc:name="[Decide] Ask Yes/No">
+			<typesafe:state><![CDATA[#[output application/json --- vars.req.state]]]></typesafe:state>
+			<typesafe:images><![CDATA[#[vars.images]]]></typesafe:images>
+		</typesafe:ask-noul>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-choose" doc:name="playground-choose">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/choose" allowedMethods="POST" doc:name="POST /playground/api/choose">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Decide] Choose" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="POST /{apiVersion}/systemone" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request"
+			message="#['[playground] choose model=' ++ (vars.req.model default 'connection default') ++ ' options=' ++ (sizeOf(vars.req.options default {}) as String)]" />
+		<typesafe:choose config-ref="TypeSafe_Config"
+			instructions="#[vars.req.instructions]"
+			chooseOptions="#[vars.req.options]"
+			noMatchOption="#[vars.req.noMatchOption]"
+			modelOverride="#[vars.req.model]"
+			step="playground"
+			doc:name="[Decide] Choose">
+			<typesafe:state><![CDATA[#[output application/json --- vars.req.state]]]></typesafe:state>
+			<typesafe:images><![CDATA[#[vars.images]]]></typesafe:images>
+		</typesafe:choose>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-score" doc:name="playground-score">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/score" allowedMethods="POST" doc:name="POST /playground/api/score">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Decide] Score" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="POST /{apiVersion}/systemone" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request"
+			message="#['[playground] score model=' ++ (vars.req.model default 'connection default') ++ ' levels=' ++ (sizeOf(vars.req.levels default []) as String)]" />
+		<typesafe:score config-ref="TypeSafe_Config"
+			instructions="#[vars.req.instructions]"
+			levels="#[vars.req.levels]"
+			modelOverride="#[vars.req.model]"
+			step="playground"
+			doc:name="[Decide] Score">
+			<typesafe:state><![CDATA[#[output application/json --- vars.req.state]]]></typesafe:state>
+			<typesafe:images><![CDATA[#[vars.images]]]></typesafe:images>
+		</typesafe:score>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-locate" doc:name="playground-locate">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/locate" allowedMethods="POST" doc:name="POST /playground/api/locate">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Decide] Locate" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="POST /{apiVersion}/systemone" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request"
+			message="#['[playground] locate model=' ++ (vars.req.model default 'connection default') ++ ' images=' ++ (sizeOf(vars.images) as String)]" />
+		<typesafe:locate config-ref="TypeSafe_Config"
+			instructions="#[vars.req.instructions]"
+			modelOverride="#[vars.req.model]"
+			step="playground"
+			doc:name="[Decide] Locate">
+			<typesafe:state><![CDATA[#[output application/json --- vars.req.state]]]></typesafe:state>
+			<typesafe:images><![CDATA[#[vars.images]]]></typesafe:images>
+		</typesafe:locate>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-validate" doc:name="playground-validate">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/validate" allowedMethods="POST" doc:name="POST /playground/api/validate">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Util] Validate Question Set" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="local" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request"
+			message="#['[playground] validate questions=' ++ (sizeOf(vars.req.questions default {}) as String)]" />
+		<typesafe:validate-question-set config-ref="TypeSafe_Config" doc:name="[Util] Validate Question Set">
+			<typesafe:questions><![CDATA[#[output application/json --- vars.req.questions]]]></typesafe:questions>
+		</typesafe:validate-question-set>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-policy" doc:name="playground-policy">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/policy" allowedMethods="POST" doc:name="POST /playground/api/policy">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Policy] Apply Policy" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="local" doc:name="HTTP call" />
+		<flow-ref name="playground-read-request" doc:name="Read request" />
+		<logger level="INFO" doc:name="Log request" message="[playground] apply-policy" />
+		<typesafe:apply-policy config-ref="TypeSafe_Config" doc:name="[Policy] Apply Policy">
+			<typesafe:decision><![CDATA[#[output application/json --- vars.req.decision]]]></typesafe:decision>
+			<typesafe:policy><![CDATA[#[output application/json --- vars.req.policy]]]></typesafe:policy>
+		</typesafe:apply-policy>
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-models" doc:name="playground-models">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/models" allowedMethods="GET" doc:name="GET /playground/api/models">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Util] Connection List Models" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="GET /{apiVersion}/models" doc:name="HTTP call" />
+		<logger level="INFO" doc:name="Log request" message="[playground] list-models" />
+		<typesafe:list-models config-ref="TypeSafe_Config" doc:name="[Util] Connection List Models" />
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+
+	<flow name="playground-capabilities" doc:name="playground-capabilities">
+		<http:listener config-ref="Playground_HTTP" path="/playground/api/capabilities" allowedMethods="GET" doc:name="GET /playground/api/capabilities">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-variable variableName="startedAt" value="#[now() as Number {unit: 'milliseconds'}]" doc:name="Start time" />
+		<set-variable variableName="operation" value="[Util] Connection Get Capabilities" doc:name="Operation" />
+		<set-variable variableName="httpCall" value="local" doc:name="HTTP call" />
+		<logger level="INFO" doc:name="Log request" message="[playground] get-capabilities" />
+		<typesafe:get-capabilities config-ref="TypeSafe_Config" doc:name="[Util] Connection Get Capabilities" />
+		<flow-ref name="playground-respond" doc:name="Respond" />
+		<error-handler ref="playground-errors" />
+	</flow>
+</mule>
