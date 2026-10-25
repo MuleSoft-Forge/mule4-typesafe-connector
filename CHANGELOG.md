@@ -5,6 +5,8 @@ All notable changes to the TypeSafe Connector are documented here. The format fo
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-10-25
+
 ### Added
 - **Images.** `evaluate`, `ask-noul`, `choose`, `score`, `select-candidate` and the new `locate` take an optional
   **Images** map: reference string → PNG or JPEG binary (`#[{ (vars.photoRef): vars.photo }]`). Write each reference
