@@ -12,6 +12,39 @@ Import **this** app folder into Studio — not the parent [`demo/`](../) directo
 4. Log defects. Do not patch the connector unless asked.
 5. Comment out that flow with Studio’s Comment out action (`<!-- [STUDIO:"flow-name"] … [STUDIO] -->`), enable the next, report. Do not use plain XML comments — Studio will not show the flow.
 
+## Playground
+
+[`src/main/mule/playground.xml`](src/main/mule/playground.xml) serves the page and shared request/respond/error helpers. [`src/main/mule/playground-operations.xml`](src/main/mule/playground-operations.xml) holds one flow per connector operation under `/playground/api/`.
+
+| Flow | Path | Billed? | Connector op |
+| --- | --- | --- | --- |
+| `playground-ui` | `GET /playground` | — | `parse-template` → [`template/playground.html`](src/main/resources/template/playground.html) |
+| `playground-models` | `GET /playground/api/models` | free\* | `[Util] Connection List Models` → `GET /{apiVersion}/models` |
+| `playground-capabilities` | `GET /playground/api/capabilities` | free | `[Util] Connection Get Capabilities` (local) |
+| `playground-validate` | `POST /playground/api/validate` | free | `[Util] Validate Question Set` (local) |
+| `playground-policy` | `POST /playground/api/policy` | free | `[Policy] Apply Policy` (local) |
+| `playground-evaluate` | `POST /playground/api/evaluate` | **billed** | `[Decide] Evaluate` → `POST /{apiVersion}/systemone` |
+| `playground-ask-noul` | `POST /playground/api/ask-noul` | **billed** | `[Decide] Ask Yes/No` |
+| `playground-choose` | `POST /playground/api/choose` | **billed** | `[Decide] Choose` |
+| `playground-score` | `POST /playground/api/score` | **billed** | `[Decide] Score` |
+| `playground-locate` | `POST /playground/api/locate` | **billed** | `[Decide] Locate` |
+
+\*List Models hits the provider's models endpoint; it is not a System One decision call.
+
+Success envelope: `{ payload, attributes, elapsedMs, operation, httpCall }`. Errors: `{ error: { type, description } }` (400 for invalid input / rejected / unsupported; 502 otherwise).
+
+1. Set `http.port` in `local.properties` (default `8081`, see `local.properties.example`).
+2. Run the app and open `http://localhost:8081/playground`.
+3. Footer **mode** picker: Evaluate (State + Questions JSON) or a shortcut (Ask Yes/No / Choose / Score / Locate) with Studio-style question fields. **Validate** (Evaluate mode) and **Apply policy** (Policy tab after an Evaluate run) are local and free.
+4. **+ Examples** is integration-first:
+   - **Integration — Evaluate & Policy:** `crm-erp-lead-dedup`, `edi-order-notes`, `erp-invoice-gl-coding`, `dlq-error-triage`, `pii-egress-guardrail`, `ticket-triage-policy` (each with a prefilled policy for the Policy tab).
+   - **Integration — Shortcuts:** `shortcut-pii-noul` (Ask Yes/No), `shortcut-dlq-choose` (Choose), `shortcut-sla-score` (Score).
+   - **Images & Locate:** `chemistry-shelf`, `images-assess-claim`, `shortcut-locate-phone`.
+   - **TypeSafe Console Examples** (secondary): `sky-blue`, `monkey-art`, `hotdog-sandwich`, `resume-screening`, `support-agent-audit`, `llm-guardrails`.
+5. **Run request** (⌘↵). Answers, payload, attributes, and (shortcuts) the connector call XML plus equivalent System One body appear below. Live models and route capabilities load on page open.
+
+Evaluate and the four shortcuts are billed TypeSafe calls. The API key stays in `local.properties`. Starting the full demo app also fires any scheduler flows in `mule4-typesafe-connector-app.xml` that are not Studio-commented.
+
 ## Utils progress (complete)
 
 | # | Page | Flow | State |

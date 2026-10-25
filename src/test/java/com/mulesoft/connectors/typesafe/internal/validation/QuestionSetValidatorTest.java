@@ -30,6 +30,18 @@ class QuestionSetValidatorTest {
   }
 
   @Test
+  void acceptsBoxAndRejectsBoxCriteria() {
+    JsonNode box = Json.read("{\"q\":{\"type\":\"box\",\"instructions\":\"the mug in `photo`\"}}");
+    assertTrue(validator.validate(box, Map.of()).isValid());
+
+    JsonNode withCriteria = Json
+        .read("{\"q\":{\"type\":\"box\",\"instructions\":\"the mug\",\"criteria\":{\"a\":\"A\"}}}");
+    ValidationResult result = validator.validate(withCriteria, Map.of());
+    assertFalse(result.isValid());
+    assertTrue(result.getErrors().get(0).contains("box takes no criteria"));
+  }
+
+  @Test
   void acceptsValidNoul() {
     JsonNode questions = Json.read("{\"q\":{\"type\":\"noul\",\"instructions\":\"Is it fraud?\"}}");
     assertTrue(validator.validate(questions, Map.of()).isValid());

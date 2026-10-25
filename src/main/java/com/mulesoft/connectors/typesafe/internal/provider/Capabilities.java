@@ -10,7 +10,7 @@ import java.util.Objects;
  */
 public class Capabilities implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   private final boolean supportsNoul;
   private final boolean supportsChoice;
@@ -20,9 +20,12 @@ public class Capabilities implements Serializable {
   private final boolean supportsStructuredInstructions;
   private final int maxChoiceOptions;
   private final int maxScoreLevels;
+  private final boolean supportsImages;
+  private final boolean supportsBox;
 
   public Capabilities(boolean supportsNoul, boolean supportsChoice, boolean supportsScore, boolean returnsConfidence,
-      boolean supportsModelList, boolean supportsStructuredInstructions, int maxChoiceOptions, int maxScoreLevels) {
+      boolean supportsModelList, boolean supportsStructuredInstructions, int maxChoiceOptions, int maxScoreLevels,
+      boolean supportsImages, boolean supportsBox) {
     this.supportsNoul = supportsNoul;
     this.supportsChoice = supportsChoice;
     this.supportsScore = supportsScore;
@@ -31,11 +34,22 @@ public class Capabilities implements Serializable {
     this.supportsStructuredInstructions = supportsStructuredInstructions;
     this.maxChoiceOptions = maxChoiceOptions;
     this.maxScoreLevels = maxScoreLevels;
+    this.supportsImages = supportsImages;
+    this.supportsBox = supportsBox;
   }
 
-  /** Capabilities of a fully-featured route that speaks the canonical TypeSafe contract. */
+  /** Capabilities of a fully-featured route that speaks the canonical TypeSafe contract, images included. */
   public static Capabilities full(boolean supportsModelList) {
-    return new Capabilities(true, true, true, true, supportsModelList, true, 255, 10);
+    return new Capabilities(true, true, true, true, supportsModelList, true, 255, 10, true, true);
+  }
+
+  /**
+   * The same capabilities without images or Box questions, for gateways that cannot forward a multipart System One
+   * request with its image parts intact.
+   */
+  public Capabilities withoutImages() {
+    return new Capabilities(supportsNoul, supportsChoice, supportsScore, returnsConfidence, supportsModelList,
+        supportsStructuredInstructions, maxChoiceOptions, maxScoreLevels, false, false);
   }
 
   public boolean isSupportsNoul() {
@@ -70,6 +84,16 @@ public class Capabilities implements Serializable {
     return maxScoreLevels;
   }
 
+  /** Images in state, instructions or criteria, sent as multipart file parts. */
+  public boolean isSupportsImages() {
+    return supportsImages;
+  }
+
+  /** Box questions, which locate a target in an image. */
+  public boolean isSupportsBox() {
+    return supportsBox;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -83,12 +107,13 @@ public class Capabilities implements Serializable {
         && supportsScore == that.supportsScore && returnsConfidence == that.returnsConfidence
         && supportsModelList == that.supportsModelList
         && supportsStructuredInstructions == that.supportsStructuredInstructions
-        && maxChoiceOptions == that.maxChoiceOptions && maxScoreLevels == that.maxScoreLevels;
+        && maxChoiceOptions == that.maxChoiceOptions && maxScoreLevels == that.maxScoreLevels
+        && supportsImages == that.supportsImages && supportsBox == that.supportsBox;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(supportsNoul, supportsChoice, supportsScore, returnsConfidence, supportsModelList,
-        supportsStructuredInstructions, maxChoiceOptions, maxScoreLevels);
+        supportsStructuredInstructions, maxChoiceOptions, maxScoreLevels, supportsImages, supportsBox);
   }
 }

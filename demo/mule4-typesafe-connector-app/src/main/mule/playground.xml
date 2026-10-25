@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:typesafe="http://www.mulesoft.org/schema/mule/typesafe"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/typesafe http://www.mulesoft.org/schema/mule/typesafe/current/mule-typesafe.xsd">
+
+	<!-- ================================================================== -->
+	<!-- Jev playground: GET serves the page; operations live in            -->
+	<!-- playground-operations.xml. Open http://localhost:${http.port}/playground -->
+	<!-- ================================================================== -->
+
+	<http:listener-config name="Playground_HTTP" doc:name="Playground HTTP">
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+
+	<error-handler name="playground-errors">
+		<on-error-continue type="TYPESAFE:INVALID_QUESTION_SET, TYPESAFE:INVALID_STATE, TYPESAFE:INVALID_IMAGE, TYPESAFE:TOO_MANY_OPTIONS, TYPESAFE:REJECTED, TYPESAFE:UNSUPPORTED_BY_PROVIDER, MULE:EXPRESSION" doc:name="Bad request">
+			<set-variable variableName="httpStatus" value="400" doc:name="400" />
+			<flow-ref name="playground-error-body" doc:name="Error body" />
+		</on-error-continue>
+		<on-error-continue type="ANY" doc:name="Provider or runtime error">
+			<set-variable variableName="httpStatus" value="502" doc:name="502" />
+			<flow-ref name="playground-error-body" doc:name="Error body" />
+		</on-error-continue>
+	</error-handler>
+
+	<flow name="playground-ui" doc:name="playground-ui">
+		<http:listener config-ref="Playground_HTTP" path="/playground" allowedMethods="GET" doc:name="GET /playground" />
+		<set-variable variableName="appName" value="${app.name}" doc:name="App name" />
+		<parse-template location="template/playground.html" outputMimeType="text/html" outputEncoding="UTF-8" doc:name="Playground page" />
+	</flow>
+
+	<sub-flow name="playground-read-request" doc:name="playground-read-request">
+		<ee:transform doc:name="Read request">
+			<ee:variables>
+				<ee:set-variable variableName="req"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	state: payload.state default {},
+	questions: payload.questions default {},
+	model: if (isBlank(payload.model default "")) null else payload.model,
+	images: payload.images default {},
+	instructions: payload.instructions default null,
+	criteriaTrue: payload.criteriaTrue default null,
+	criteriaFalse: payload.criteriaFalse default null,
+	options: payload.options default {},
+	noMatchOption: payload.noMatchOption default null,
+	levels: payload.levels default [],
+	policy: payload.policy default null,
+	decision: payload.decision default null
+}]]></ee:set-variable>
+				<ee:set-variable variableName="images"><![CDATA[%dw 2.0
+import fromBase64 from dw::core::Binaries
+output application/java
+---
+(payload.images default {}) mapObject ((data, ref) ->
+	(ref): fromBase64((data as String) replace /^data:[^,]*,/ with ""))]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+
+	<sub-flow name="playground-respond" doc:name="playground-respond">
+		<ee:transform doc:name="Payload and attributes">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: if (attributes != null) (attributes - "rawResponse") else null,
+	elapsedMs: (now() as Number {unit: "milliseconds"}) - vars.startedAt,
+	operation: vars.operation,
+	httpCall: vars.httpCall
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+
+	<sub-flow name="playground-error-body" doc:name="playground-error-body">
+		<logger level="WARN" doc:name="Log error"
+			message="#['[playground] ' ++ error.errorType.namespace ++ ':' ++ error.errorType.identifier ++ ' ' ++ (error.description default '')]" />
+		<ee:transform doc:name="Error JSON">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: {
+		"type": error.errorType.namespace ++ ":" ++ error.errorType.identifier,
+		description: error.description default ""
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>

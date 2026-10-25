@@ -13,8 +13,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Builds the DataSense output type for a decision from a question set, so Studio and ACB autocomplete
- * {@code payload.answers.<id>.choice}, {@code .noul}, {@code .score} and {@code .derived.level} per the §7 canonical
- * shape. When no question set is known (inline {@code questions}), it returns the generic shape with an open
+ * {@code payload.answers.<id>.choice}, {@code .noul}, {@code .score}, {@code .box} and {@code .derived} per the §7
+ * canonical shape. When no question set is known (inline {@code questions}), it returns the generic shape with an open
  * {@code answers} map. Pure and side-effect free, so the resolver stays a thin adapter and the type is unit-tested
  * directly.
  */
@@ -60,7 +60,7 @@ public final class DecisionTypeBuilder {
         break;
       case "score" :
         answer.addField().key("score").value().numberType();
-        answer.addField().key("legend").value().objectType().openWith().stringType();
+        answer.addField().key("legend").value().objectType().openWith().anyType();
         answer.addField().key("probabilities").value().objectType().openWith().numberType();
         answer.addField().key("confidence").value().numberType();
         ObjectTypeBuilder scoreDerived = answer.addField().key("derived").value().objectType();
@@ -70,9 +70,31 @@ public final class DecisionTypeBuilder {
       case "noul" :
         answer.addField().key("noul").value().numberType();
         break;
+      case "box" :
+        addBoxFields(answer);
+        break;
       default :
         // Unknown or dynamic question type: leave the answer open rather than guess its fields.
         answer.open();
     }
+  }
+
+  /**
+   * The Box answer fields after {@code type}: {@code box} edges, {@code confidence} (null when the model gives none)
+   * and the connector's {@code derived} geometry. Shared with the Locate operation's output type.
+   */
+  static void addBoxFields(ObjectTypeBuilder answer) {
+    ObjectTypeBuilder box = answer.addField().key("box").value().objectType().id("typesafe-box-coordinates");
+    box.addField().key("top").value().numberType();
+    box.addField().key("bottom").value().numberType();
+    box.addField().key("left").value().numberType();
+    box.addField().key("right").value().numberType();
+    answer.addField().key("confidence").value().numberType();
+    ObjectTypeBuilder derived = answer.addField().key("derived").value().objectType();
+    derived.addField().key("width").value().numberType();
+    derived.addField().key("height").value().numberType();
+    derived.addField().key("centerX").value().numberType();
+    derived.addField().key("centerY").value().numberType();
+    derived.addField().key("area").value().numberType();
   }
 }

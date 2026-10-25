@@ -50,6 +50,37 @@ class DerivedComputerTest {
   }
 
   @Test
+  void enrichesBoxWithGeometry() {
+    ObjectNode answers = (ObjectNode) Json.read("{\"q\":{\"type\":\"box\","
+        + "\"box\":{\"top\":0.2,\"bottom\":0.6,\"left\":0.1,\"right\":0.5},\"confidence\":null}}");
+
+    DerivedComputer.enrich(answers, Map.of());
+
+    ObjectNode derived = (ObjectNode) answers.get("q").get("derived");
+    assertEquals(0.4, derived.get("width").asDouble(), 1e-9);
+    assertEquals(0.4, derived.get("height").asDouble(), 1e-9);
+    assertEquals(0.3, derived.get("centerX").asDouble(), 1e-9);
+    assertEquals(0.4, derived.get("centerY").asDouble(), 1e-9);
+    assertEquals(0.16, derived.get("area").asDouble(), 1e-9);
+  }
+
+  @Test
+  void roundsBoxGeometrySoFloatNoiseDoesNotReachThePayload() {
+    ObjectNode answers = (ObjectNode) Json.read(
+        "{\"q\":{\"type\":\"box\",\"box\":{\"top\":0.29,\"bottom\":0.69,\"left\":0.24,\"right\":0.75},\"confidence\":0.78}}");
+    DerivedComputer.enrich(answers, Map.of());
+    assertEquals("{\"width\":0.51,\"height\":0.4,\"centerX\":0.495,\"centerY\":0.49,\"area\":0.204}",
+        answers.get("q").get("derived").toString());
+  }
+
+  @Test
+  void skipsBoxGeometryWhenAnEdgeIsMissing() {
+    ObjectNode answers = (ObjectNode) Json.read("{\"q\":{\"type\":\"box\",\"box\":{\"top\":0.2}}}");
+    DerivedComputer.enrich(answers, Map.of());
+    assertFalse(answers.get("q").has("derived"));
+  }
+
+  @Test
   void leavesNoulUntouched() {
     ObjectNode answers = (ObjectNode) Json.read("{\"q\":{\"type\":\"noul\",\"noul\":0.8}}");
     DerivedComputer.enrich(answers, Map.of());

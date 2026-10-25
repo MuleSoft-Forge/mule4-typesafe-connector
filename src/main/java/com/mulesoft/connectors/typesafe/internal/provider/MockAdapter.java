@@ -16,10 +16,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * In-process adapter used by the {@code mock} route. It never leaves the runtime and needs no credentials, so tests and
  * the demo app can run without keys. It synthesises a valid, type-appropriate answer for every question in the request:
- * Noul answers report {@code defaultNoul}; Choice and Score answers concentrate probability on the first option/level.
- * It reads options and levels only from TypeSafe's {@code criteria} field and answers in TypeSafe's shapes (Noul
- * {@code noul}; Score {@code score}, 0-based {@code legend}/{@code probabilities}), so downstream derivation and
- * DataSense behave exactly as with a real route and a question the real API would reject yields no options here.
+ * Noul answers report {@code defaultNoul}; Choice and Score answers concentrate probability on the first option/level;
+ * Box answers return the centred half of the image. It reads options and levels only from TypeSafe's {@code criteria}
+ * field and answers in TypeSafe's shapes (Noul {@code noul}; Score {@code score}, 0-based
+ * {@code legend}/{@code probabilities}), so downstream derivation and DataSense behave exactly as with a real route and
+ * a question the real API would reject yields no options here.
  */
 public class MockAdapter implements ProviderAdapter {
 
@@ -79,9 +80,20 @@ public class MockAdapter implements ProviderAdapter {
         return choiceAnswer(question);
       case "score" :
         return scoreAnswer(question);
+      case "box" :
+        return boxAnswer();
       default :
         return noulAnswer();
     }
+  }
+
+  /** The centred half of the image, with the same 0.6 confidence the other mock answers concentrate. */
+  private static ObjectNode boxAnswer() {
+    ObjectNode answer = Json.object();
+    answer.put("type", "box");
+    answer.putObject("box").put("top", 0.25).put("bottom", 0.75).put("left", 0.25).put("right", 0.75);
+    answer.put("confidence", 0.6);
+    return answer;
   }
 
   private ObjectNode noulAnswer() {

@@ -31,6 +31,12 @@ class HttpErrorMapperTest {
   }
 
   @Test
+  void mapsSizeAndEncodingErrorsFromTheImagesContract() {
+    assertEquals(TypeSafeErrorType.REQUEST_TOO_LARGE, HttpErrorMapper.classify(413));
+    assertEquals(TypeSafeErrorType.PROVIDER_VALIDATION, HttpErrorMapper.classify(415));
+  }
+
+  @Test
   void extractsMessageInDocumentedOrder() {
     assertEquals("top", HttpErrorMapper.extractMessage("{\"error\":\"top\"}").orElseThrow());
     assertEquals("nested", HttpErrorMapper.extractMessage("{\"error\":{\"message\":\"nested\"}}").orElseThrow());
